@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 class Person(models.Model):
     name = models.CharField(max_length=20)
     department = models.ForeignKey('base.Department')
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, related_name='user')
 
 
 class ProfessionalSystem(models.Model):
@@ -15,4 +15,4 @@ class ProfessionalSystem(models.Model):
 
 class Department(models.Model):
     name = models.CharField(max_length=20)
-    system = models.ForeignKey('base.ProfessionalSystem')
+    system = models.ForeignKey('base.ProfessionalSystem', null=True)

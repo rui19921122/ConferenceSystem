@@ -3,67 +3,65 @@ from django.core.urlresolvers import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from base.models import Person, Department
+from class_plan.models import ClassPlanBase, WhichDepartmentCanEditClassPlan
+from rest_framework.parsers import JSONParser
+from base.models import ProfessionalSystem
+
 from . import models
 
 
 # Create your tests here.
 
 
-class TestClassPlan(APITestCase):
+class TestApiBase(APITestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(TestApiBase, cls).setUpClass()
+        cls.new = models.ClassPlanBase(name='test1', number='1')
+        cls.new.save()
+        cls.new1 = models.ClassPlanBase(name='test2', number='2')
+        cls.new1.save()
+
     def setUp(self):
-        User.objects.create_superuser('hanrui', '1@qq.com', '111111')
-        new = models.ClassPlanBase(name='111', number=2)
-        new.save()
+        system = ProfessionalSystem(name='接发列车')
+        system.save()
+        new_department = Department(name='调度车间', system=system)
+        new_department.save()
+        not_allowed_department = Department(name='出发', system=system)
+        not_allowed_department.save()
+        WhichDepartmentCanEditClassPlan(department=new_department).save()
+        user = User.objects.create_user(username='allowed', password='111111')
+        f = Person(name='test', department=new_department, user=user)
+        f.save()
+        user = User.objects.create_user(username='not_allowed', password='111111')
+        f = Person(name='test', department=not_allowed_department, user=user)
+        f.save()
 
-    def test_anonymous_put_request(self):
+    def test_list_class_plan_base(self):
+        self.client.login(username='hanrui', password='111111')
+        url = reverse('update_class_plan')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(len(response.data), 2, response.data)
         self.client.logout()
+
+    def test_post_class_plan_base_by_other(self):
+        self.client.login(username='not_allowed', password='111111')
         url = reverse('update_class_plan')
-        res = self.client.put(url, {'name': '111'})
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        response = self.client.post(url, data={'name': 'test3', 'number': '3'})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, response.data)
 
-    def test_anonymous_post_request(self):
-        self.client.logout()
+    def test_post_class_plan_base_by_allowed_person(self):
+        self.client.login(username='allowed', password='111111')
         url = reverse('update_class_plan')
-        res = self.client.post(url, {'name': '111'})
-        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        response = self.client.post(url, data={'name': 'test3', 'number': '3'})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(len(response.data), 3, response.data)
 
-    def test_none_update_class_plan(self):
-        models.ClassPlanBase.objects.filter(number=1).delete()
-        self.client.login(username='hanrui', password='111111')
-        url = reverse('update_class_plan')
-        res = self.client.put(url, {'name': '111', 'number': 1})
-        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_add_class_plan(self):
-        self.client.login(username='hanrui', password='111111')
-        url = reverse('update_class_plan')
-        res = self.client.post(url, {'name': '111', 'number': 1})
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(models.ClassPlanBase.objects.all().count(), 2)
-        self.assertEqual(res.data, {'name': '111', 'number': 1})
-
-    def test_conflict_post(self):
-        self.client.login(username='hanrui', password='111111')
-        url = reverse('update_class_plan')
-        res = self.client.post(url, {'name': '111', 'number': 2})
-        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_anoy_get_all(self):
-        url = reverse('update_class_plan')
-        res = self.client.get(path=url)
-        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    def test_user_get_without_number(self):
-        self.client.login(username='hanrui', password='111111')
-        url = reverse('update_class_plan', )
-        res = self.client.get(path=url)
-        self.assertEqual(res.status_code, 400)
-
-    def test_user_get_with_number(self):
-        self.client.login(username='hanrui', password='111111')
-        url = reverse('update_class_plan')
-        res = self.client.get(path=url, data={'number': '2'})
-        self.assertEqual(res.status_code, 400)
-
-    def tearDown(self):
-        User.objects.get(username='hanrui').delete()
+    def test_get_class_plan_base(self):
+        self.client.login(username='allowed', password='111111')
+        url = reverse('get_class_plan', 1)
+        response = self.client.post(url, data={'name': 'test3', 'number': '3'})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(len(response.data), 3, response.data)

@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 
 class ClassPlanBase(models.Model):
     name = models.CharField(max_length=50)
-    number = models.PositiveSmallIntegerField()
+    number = models.PositiveSmallIntegerField(unique=True)
 
 
 class DayTable(models.Model):
@@ -39,3 +39,10 @@ class SingleClaimDetail(models.Model):
     number = models.PositiveSmallIntegerField()
     department = models.ForeignKey('base.Department')
     claim_time = models.DateTimeField(auto_now_add=True)
+
+
+class WhichDepartmentCanEditClassPlan(models.Model):
+    """
+    指定谁可以更改班计划,超级管理员一直具有权限
+    """
+    department = models.OneToOneField('base.Department', )

@@ -17,6 +17,7 @@ class Test(APITestCase):
         data = {'username': 'hanrui', 'password': '111111'}
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.client.logout()
 
     def tearDown(self):
         a = User.objects.get(username='hanrui')
