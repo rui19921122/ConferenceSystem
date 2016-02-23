@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 ('number', models.PositiveSmallIntegerField()),
                 ('claim_time', models.DateTimeField(auto_now_add=True)),
                 ('department', models.ForeignKey(to='base.Department')),
-                ('father_detail', models.ForeignKey(to='class_plan.DayDetail')),
+                ('father_detail', models.ForeignKey(to='class_plan.models.ClassPlanDayDetail')),
             ],
         ),
         migrations.CreateModel(
@@ -53,12 +53,12 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(serialize=False, verbose_name='ID', primary_key=True, auto_created=True)),
                 ('content', models.CharField(max_length=500)),
                 ('number', models.PositiveSmallIntegerField()),
-                ('father_detail', models.ForeignKey(to='class_plan.DayDetail')),
+                ('father_detail', models.ForeignKey(to='class_plan.models.ClassPlanDayDetail')),
             ],
         ),
         migrations.AddField(
             model_name='daydetail',
             name='table',
-            field=models.ForeignKey(to='class_plan.DayTable'),
+            field=models.ForeignKey(to='class_plan.models.ClassPlanDayTable'),
         ),
     ]

@@ -1,9 +1,11 @@
-from django.conf.urls import include, url
-from . import views
+from django.conf.urls import url, include
+from rest_framework.routers import DefaultRouter
 
-urlpatterns = [
-    url(r'^ClassPlanBase/$', views.updateClassPlanBase.as_view(),
-        name='update_class_plan'),
-    url(r'^ClassPlanBase/(?P<pk>\d*)', views.getClassPlanBaseByPk.as_view(),
-        name='get_class_plan'),
+from .views import ClassPlanBaseViewSet, ClassPlan
+
+router = DefaultRouter()
+router.register('classPlanBase', ClassPlanBaseViewSet, base_name='class-plan-base')
+urlpatterns = [url(r'^', include(router.urls))]
+urlpatterns += [
+    url(r'^classPlan/(?P<date>\d{8})', name='class-plan', view=ClassPlan.as_view()),
 ]
