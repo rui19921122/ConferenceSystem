@@ -91,9 +91,28 @@ class TestPostClassPlan(APITestCase):
         user = User.objects.create_user(username='not_allowed', password='111111')
         f = Person(name='test', department=not_allowed_department, user=user)
         f.save()
+        style = ProfessionalSystem(name='接发列车', pk=1)
+        style.save()
+        classPlan_base = models.ClassPlanBase(name='1', number=1)
+        classPlan_base.save()
 
     def test_post_data(self):
         self.client.login(username='allowed', password='111111')
         url = reverse('class-plan')
-        response = self.client.post(url, data=publish_class_plan_data)
-        self.assertEqual(response.data, status.HTTP_201_CREATED, response.data)
+        response = self.client.post(url, data=publish_class_plan_data, )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+
+    def test_post_data_with_not_allowed_people(self):
+        '''测试非指定用户提交班计划'''
+        self.client.login(username='not_allowed', password='111111')
+        url = reverse('class-plan')
+        response = self.client.post(url, data=publish_class_plan_data, )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, response.data)
+
+    def test_get_class_plan_by_date(self):
+        self.client.login(username='allowed', password='111111')
+        self.client.post(reverse('class-plan'), data=publish_class_plan_data, )
+        self.client.login(username='not_allowed', password='111111')
+        url = reverse('class-plan-by-date', args=['2016-02-18'])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)

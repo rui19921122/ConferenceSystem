@@ -15,20 +15,20 @@ class ClassPlanDayTable(models.Model):
 
 
 class ClassPlanDayDetail(models.Model):
-    table = models.ForeignKey(ClassPlanDayTable)
+    table = models.ForeignKey('class_plan.ClassPlanDayTable', related_name='day_detail')
     department = models.CharField(max_length=100)
-    style = models.ForeignKey(ClassPlanBase)
+    style = models.ForeignKey('class_plan.ClassPlanBase', )
     number = models.PositiveSmallIntegerField()
 
 
 class SinglePublishDetail(models.Model):
     detail = models.CharField(max_length=500)
     number = models.PositiveSmallIntegerField()
-    parent = models.ForeignKey(ClassPlanDayDetail)
+    parent = models.ForeignKey('class_plan.ClassPlanDayDetail', related_name='publish_detail')
 
 
 class SingleClaimDetail(models.Model):
-    father_detail = models.ForeignKey(ClassPlanDayDetail)
+    father_detail = models.ForeignKey('class_plan.SinglePublishDetail')
     content = models.CharField(max_length=500)
     number = models.PositiveSmallIntegerField()
     department = models.ForeignKey('base.Department')
@@ -39,4 +39,4 @@ class WhichDepartmentCanEditClassPlan(models.Model):
     """
     指定谁可以更改班计划,超级管理员一直具有权限
     """
-    department = models.OneToOneField('base.Department', )
+    department = models.OneToOneField('base.Department')
