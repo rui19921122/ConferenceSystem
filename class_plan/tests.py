@@ -97,10 +97,17 @@ class TestPostClassPlan(APITestCase):
         classPlan_base.save()
 
     def test_post_data(self):
+        '''
+        正常提交
+        :return:
+        '''
         self.client.login(username='allowed', password='111111')
         url = reverse('class-plan')
         response = self.client.post(url, data=publish_class_plan_data, )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(models.ClassPlanDayTable.objects.all().count(), 1)
+        self.assertEqual(models.SinglePublishDetail.objects.all().count(), 4)
+        self.assertEqual(models.ClassPlanDayDetail.objects.all().count(), 2)
 
     def test_post_data_with_not_allowed_people(self):
         '''测试非指定用户提交班计划'''
@@ -110,9 +117,96 @@ class TestPostClassPlan(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN, response.data)
 
     def test_get_class_plan_by_date(self):
+        '''
+        以日期检索班计划
+        :return:
+        '''
         self.client.login(username='allowed', password='111111')
         self.client.post(reverse('class-plan'), data=publish_class_plan_data, )
         self.client.login(username='not_allowed', password='111111')
         url = reverse('class-plan-by-date', args=['2016-02-18'])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+
+    def test_delete_class_plan_by_date(self):
+        '''
+        删除全部班计划
+        :return:
+        '''
+        self.client.login(username='allowed', password='111111')
+        self.client.post(reverse('class-plan'), data=publish_class_plan_data, )
+        url = reverse('class-plan-by-date', args=['2016-02-18'])
+        response = self.client.delete(url)
+        self.assertEqual(models.ClassPlanDayTable.objects.all().count(), 0,
+                         models.ClassPlanDayTable.objects.all())
+        self.assertEqual(models.ClassPlanDayDetail.objects.count(), 0)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_class_plan_by_wrong_date(self):
+        '''
+        以错误的日期删除全部班计划
+        :return:
+        '''
+        self.client.login(username='allowed', password='111111')
+        self.client.post(reverse('class-plan'), data=publish_class_plan_data, )
+        url = reverse('class-plan-by-date', args=['2016-02-19'])
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_class_plan_by_date(self):
+        self.client.login(username='allowed', password='111111')
+        self.client.post(reverse('class-plan'), data=publish_class_plan_data, )
+        url = reverse('class-plan-by-date', args=['2016-02-18'])
+        another_data = publish_class_plan_data.copy()
+        another_data['day_detail'] = [{
+            'number': 1,
+            'department': '改动后车间站',
+            'style': 1,
+            'publish_detail': [
+                {'number': 1,
+                 'detail': '改动后内容'},
+                {'number': 2,
+                 'detail': '改动后内容'}
+            ]
+        },
+            {
+                'number': 2,
+                'department': '改动后车间站',
+                'style': 1,
+                'publish_detail': [
+                    {'number': 1,
+                     'detail': '改动后内容'},
+                    {'number': 2,
+                     'detail': '改动后内容'}]}]
+        response = self.client.put(url, data=another_data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
+        self.assertEqual(models.ClassPlanDayDetail.objects.count(),
+                         2, models.ClassPlanDayDetail.objects.all().values())
+
+    def test_update_class_plan_by_wrong_date(self):
+        self.client.login(username='allowed', password='111111')
+        self.client.post(reverse('class-plan'), data=publish_class_plan_data, )
+        url = reverse('class-plan-by-date', args=['2016-02-19'])
+        another_data = publish_class_plan_data.copy()
+        another_data['day_detail'] = [{
+            'number': 1,
+            'department': '改动后车间站',
+            'style': 1,
+            'publish_detail': [
+                {'number': 1,
+                 'detail': '改动后内容'},
+                {'number': 2,
+                 'detail': '改动后内容'}
+            ]
+        },
+            {
+                'number': 2,
+                'department': '改动后车间站',
+                'style': 1,
+                'publish_detail': [
+                    {'number': 1,
+                     'detail': '改动后内容'},
+                    {'number': 2,
+                     'detail': '改动后内容'}]}]
+        response = self.client.put(url, data=another_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)

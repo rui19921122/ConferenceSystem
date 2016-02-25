@@ -15,7 +15,8 @@ class ClassPlanDayTable(models.Model):
 
 
 class ClassPlanDayDetail(models.Model):
-    table = models.ForeignKey('class_plan.ClassPlanDayTable', related_name='day_detail')
+    table = models.ForeignKey('class_plan.ClassPlanDayTable',
+                              related_name='day_detail', )
     department = models.CharField(max_length=100)
     style = models.ForeignKey('class_plan.ClassPlanBase', )
     number = models.PositiveSmallIntegerField()

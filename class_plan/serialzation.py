@@ -1,3 +1,5 @@
+import datetime
+
 from rest_framework import serializers
 
 from . import models
@@ -12,9 +14,11 @@ class ClassPlanBase(serializers.HyperlinkedModelSerializer):
 
 
 class ClassPlanPublishDetail(serializers.ModelSerializer):
+    # todo 添加返回直接编辑链接的选项
+
     class Meta:
         model = models.SinglePublishDetail
-        fields = ('number', 'detail', 'id', 'edit_url')
+        fields = ('number', 'detail', 'id')
 
 
 class ClassPlanDayDetailSerializer(serializers.ModelSerializer):
