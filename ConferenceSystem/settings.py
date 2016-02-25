@@ -43,7 +43,8 @@ INSTALLED_APPS = (
     'class_plan',
     'accidentCase',
     'professionalStudy',
-    'checkIn'
+    'checkIn',
+    'rest_framework_docs',
 )
 
 MIDDLEWARE_CLASSES = (
