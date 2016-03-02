@@ -18,7 +18,9 @@ from django.contrib import admin
 
 api_url = [
     url(r'^auth/', include('rest_auth.urls')),
-    url(r'^class_plan/', include('class_plan.urls'))
+    url(r'^class_plan/', include('class_plan.urls')),
+    url(r'^professional_study/', include('professionalStudy.urls')),
+    url(r'^menu/', include('base.urls')),
 ]
 
 urlpatterns = [

@@ -19,6 +19,12 @@ class Test(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.client.logout()
 
+    def test_get_menu(self):
+        url = reverse('getMenu')
+        self.client.login(username='hanrui', password='111111')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
     def tearDown(self):
         a = User.objects.get(username='hanrui')
         a.delete()
