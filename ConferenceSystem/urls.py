@@ -26,5 +26,5 @@ api_url = [
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^api/', include(api_url)),
-    url(r'^docs/', include('rest_framework_docs.urls')),
+    url(r'^', include('rest_framework_docs.urls')),
 ]
