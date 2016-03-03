@@ -22,9 +22,9 @@ class Menu(APIView):
                  {
                      'type': 'multiple', 'name': '班计划管理', 'href': 'class-plan', 'key': 'plan0',
                      'children': [
-                         {'type': 'single', 'name': '管理班计划', 'href': 'manage-accident', 'key': 'plan1'},
-                         {'type': 'single', 'name': '增加班计划', 'href': 'add-accident', 'key': 'plan2'},
-                         {'type': 'single', 'name': '查询班计划', 'href': 'query-accident', 'key': 'plan3'},
+                         {'type': 'single', 'name': '管理班计划', 'href': 'manage-class-plan', 'key': 'plan1'},
+                         {'type': 'single', 'name': '增加班计划', 'href': 'add-class-plan', 'key': 'plan2'},
+                         {'type': 'single', 'name': '查询班计划', 'href': 'query-class-plan', 'key': 'plan3'},
                      ]
                  },
                  {
