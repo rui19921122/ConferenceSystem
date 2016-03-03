@@ -6,6 +6,8 @@ class Worker(models.Model):
     name = models.CharField(max_length=15, verbose_name='姓名')
     position = models.ForeignKey('worker.Position')
     is_study = models.BooleanField(default=False)
+    alter = models.BooleanField(default=False)
+    class_number = models.PositiveSmallIntegerField(null=True, blank=True)
 
 
 class Position(models.Model):
