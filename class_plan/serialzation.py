@@ -10,7 +10,7 @@ class ClassPlanBase(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.ClassPlanBase
-        fields = ('number', 'name', 'edit_url')
+        fields = ('name', 'edit_url')
 
 
 class ClassPlanPublishDetail(serializers.ModelSerializer):
@@ -18,11 +18,12 @@ class ClassPlanPublishDetail(serializers.ModelSerializer):
 
     class Meta:
         model = models.SinglePublishDetail
-        fields = ('number', 'detail', 'id')
+        fields = ('detail', 'id')
 
 
 class ClassPlanDayDetailSerializer(serializers.ModelSerializer):
     publish_detail = ClassPlanPublishDetail(many=True)
+    style = serializers.SlugRelatedField(read_only=True, slug_field='name')
 
     class Meta:
         model = models.ClassPlanDayDetail

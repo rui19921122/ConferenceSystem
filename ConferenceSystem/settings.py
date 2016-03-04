@@ -45,6 +45,7 @@ INSTALLED_APPS = (
     'professionalStudy',
     'checkIn',
     'rest_framework_docs',
+    'upload',
 )
 
 MIDDLEWARE_CLASSES = (

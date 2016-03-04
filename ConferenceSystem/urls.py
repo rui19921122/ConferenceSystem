@@ -22,6 +22,7 @@ api_url = [
     url(r'^professional_study/', include('professionalStudy.urls')),
     url(r'^menu/', include('base.urls')),
     url(r'^worker/', include('worker.urls')),
+    url(r'^upload/', include('upload.urls')),
 ]
 
 urlpatterns = [

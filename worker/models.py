@@ -3,7 +3,7 @@ from django.db import models
 
 # Create your models here.
 class Worker(models.Model):
-    name = models.CharField(max_length=15, verbose_name='姓名')
+    name = models.CharField(max_length=15, verbose_name='姓名', unique=True)
     position = models.ForeignKey('worker.Position')
     is_study = models.BooleanField(default=False)
     alter = models.BooleanField(default=False)

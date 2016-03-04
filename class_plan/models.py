@@ -1,15 +1,15 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 
 # Create your models here.
 
 class ClassPlanBase(models.Model):
     name = models.CharField(max_length=50)
-    number = models.PositiveSmallIntegerField(unique=True)
 
 
 class ClassPlanDayTable(models.Model):
-    publish_person = models.ForeignKey('base.Person')
+    publish_person = models.ForeignKey(User)
     publish_time = models.DateTimeField(auto_now_add=True)
     time = models.DateField()
 
@@ -24,7 +24,6 @@ class ClassPlanDayDetail(models.Model):
 
 class SinglePublishDetail(models.Model):
     detail = models.CharField(max_length=500)
-    number = models.PositiveSmallIntegerField()
     parent = models.ForeignKey('class_plan.ClassPlanDayDetail', related_name='publish_detail')
 
 
