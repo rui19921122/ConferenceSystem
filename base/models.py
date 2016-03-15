@@ -9,10 +9,5 @@ class Person(models.Model):
     user = models.OneToOneField(User, related_name='user')
 
 
-class ProfessionalSystem(models.Model):
-    name = models.CharField(max_length=20)
-
-
 class Department(models.Model):
     name = models.CharField(max_length=20)
-    system = models.ForeignKey('base.ProfessionalSystem', null=True)
