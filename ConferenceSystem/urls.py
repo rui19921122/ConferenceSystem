@@ -24,6 +24,7 @@ api_url = [
     url(r'^worker/', include('worker.urls')),
     url(r'^upload/', include('upload.urls')),
     url(r'^accident/', include('accidentCase.urls')),
+    url(r'^call_over/', include('call_over.urls')),
 ]
 
 urlpatterns = [
