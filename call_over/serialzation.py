@@ -6,7 +6,7 @@ from professionalStudy.serialzation import ProfessionalStudySerializer
 from accidentCase.serization import AccidentSerializer
 
 
-class CallOverDetail(serializers.BaseSerializer):
-    class_plan = ClassPlanDayTable()
-    study = ProfessionalStudySerializer(many=True)
-    accident = AccidentSerializer(many=True)
+class CallOverDetailSer(serializers.Serializer):
+    class_plan = ClassPlanDayTable(read_only=True, required=False)
+    study = ProfessionalStudySerializer(many=True, read_only=True, required=False)
+    accident = AccidentSerializer(many=True, read_only=True, required=False)

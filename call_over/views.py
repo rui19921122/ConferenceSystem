@@ -6,11 +6,15 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from .serialzation import CallOverDetail
+from .serialzation import CallOverDetailSer
 from .models import CallOverDetail
 from professionalStudy.models import ProfessionalStudy
 from accidentCase.models import Accident
 from class_plan.models import ClassPlanDayTable
+from class_plan.serialzation import ClassPlanDayTable as ClassPlanDayTableSer
+from accidentCase.serization import AccidentSerializer
+from professionalStudy.serialzation import ProfessionalStudySerializer
+
 import time
 
 
@@ -24,12 +28,12 @@ class GetDefaultClassNumber(APIView):
         user = request.user
         if user.is_authenticated():
             hour = time.localtime().tm_hour
-            if hour in [7, 18, 1, 2, 3]:
-                return Response({'number': 2}
-                                , status=status.HTTP_200_OK)
-            else:
-                return Response({'number': False}
-                                , status=status.HTTP_200_OK)
+            # if hour in [7, 18, 1, 2, 3]:
+            return Response({'number': 2}
+                            , status=status.HTTP_200_OK)
+            # else:
+            #     return Response({'number': False}
+            #                     , status=status.HTTP_200_OK)
 
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
@@ -56,8 +60,8 @@ class BeginCallOver(APIView):
             return Response(status=status.HTTP_403_FORBIDDEN)
         hour = _time.tm_hour
         today = datetime.datetime.today()
-        if hour not in [7, 18, 1, 2, 3]:
-            return Response('不是规定的时间段', status=status.HTTP_400_BAD_REQUEST)
+        # if hour not in [7, 18, 1, 2, 3,]:
+        #     return Response('不是规定的时间段', status=status.HTTP_400_BAD_REQUEST)
         number = str(request.data.get('number'))
         query = mapNumberToQuery[number]
         unused = request.data.get('unused')
@@ -86,11 +90,12 @@ class BeginCallOver(APIView):
                               query + '__year': today.year,
                               }
         had_study = ProfessionalStudy.objects.filter(**args_not_need_edit)
-        all_study = un_study + had_study
-        all_accident = []
         un_accident = Accident.objects.filter(**args_edit)
         if un_accident:
             for i in un_accident:
                 i.study(number)
         had_accident = Accident.objects.filter(**args_not_need_edit)
-        all_accident = un_accident + had_accident
+        class_plan_ser = ClassPlanDayTableSer(class_plan)
+        study_ser = ProfessionalStudySerializer(had_study, many=True)
+        accident_ser = AccidentSerializer(had_accident, many=True)
+        return Response({'class_plan': class_plan_ser.data, 'study': study_ser.data, 'accident': accident_ser.data})
