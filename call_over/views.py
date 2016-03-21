@@ -66,12 +66,15 @@ class BeginCallOver(APIView):
         query = mapNumberToQuery[number]
         unused = request.data.get('unused')
         # 处理添加相关人员
-        if not CallOverDetail.objects.filter(department=department, class_number=number,
-                                             day=today).exists():
+        exist = CallOverDetail.objects.filter(department=department, class_number=number, day=today)
+        if len(exist) == 0:
             new = CallOverDetail.objects.create(department=department, host_person=user,
                                                 class_number=number)
+            pk = new.pk
             for person in unused:
                 new.attend_person_unused.add(person)
+        else:
+            pk = exist[0].pk
 
         # 处理回送数据
         all_study = []
@@ -98,4 +101,7 @@ class BeginCallOver(APIView):
         class_plan_ser = ClassPlanDayTableSer(class_plan)
         study_ser = ProfessionalStudySerializer(had_study, many=True)
         accident_ser = AccidentSerializer(had_accident, many=True)
-        return Response({'class_plan': class_plan_ser.data, 'study': study_ser.data, 'accident': accident_ser.data})
+        return Response({'data': {'class_plan': class_plan_ser.data,
+                                  'study': study_ser.data,
+                                  'accident': accident_ser.data,},
+                         'pk': pk})
