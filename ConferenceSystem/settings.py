@@ -121,3 +121,4 @@ REST_FRAMEWORK = {
     ),
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

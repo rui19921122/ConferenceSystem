@@ -1,10 +1,25 @@
+import os
+
+from PIL import Image
+from django.core.files import File
+from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.views.generic import View
+from rest_framework import status
+from rest_framework.response import Response
+from call_over.models import Audios
 from .models import ClassPlanUpload
+from call_over.models import CallOverDetail
 import datetime
 from django.http.response import HttpResponse
 from class_plan.models import ClassPlanDayDetail, ClassPlanBase, ClassPlanDayTable, SinglePublishDetail
+from rest_framework.views import APIView
+import base64
 import xlrd
+import io
+from . import serialzation
+import tempfile
 
 
 # Create your views here.
@@ -28,7 +43,7 @@ def handleClassPlanFile(request, date):
             new_day_detail = ClassPlanDayDetail(
                 department=department, number=number,
                 style=ClassPlanBase.objects.get_or_create(name=name,
-                                                             )[0],
+                                                          )[0],
                 table=table
             )
             new_day_detail.save()
@@ -37,3 +52,36 @@ def handleClassPlanFile(request, date):
             for row in range(first_row, last_row):
                 SinglePublishDetail.objects.create(detail=sheet.cell_value(row, 2), parent=new_day_detail)
         return HttpResponse(status=201)
+
+
+class handleUploadImage(APIView):
+    def post(self, request, id):
+        user = request.user
+        if user.is_authenticated():
+            department = user.user.department
+            detail = CallOverDetail.objects.get(pk=id)
+            if detail.department == department:
+                data = request.data
+                data['parent'] = id
+                ser = serialzation.FileUpload(data=data)
+                ser.is_valid()
+                ser.save()
+                return Response(status=status.HTTP_201_CREATED)
+
+
+import time
+
+
+def handleUploadAudio(request, id):
+    if request.method != 'POST':
+        return HttpResponse(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    if not request.user.is_authenticated():
+        return HttpResponse(status=status.HTTP_403_FORBIDDEN)
+    user = request.user
+    department = user.user.department
+    with open('1.wav', 'wb+') as file:
+        new_file = File(file)
+        new_file.write(request.body)
+        new = Audios(audio=new_file, parent_id=id)
+        new.save()
+    return HttpResponse(status=status.HTTP_201_CREATED)

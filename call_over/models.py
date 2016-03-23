@@ -14,3 +14,15 @@ class CallOverDetail(models.Model):
     class_number = models.SmallIntegerField(choices=(
         (1, 1), (2, 2), (3, 3), (4, 4)
     ))
+
+
+class Photos(models.Model):
+    image = models.ImageField(upload_to='CallOverImage')
+    date = models.DateTimeField(auto_now_add=True)
+    parent = models.ForeignKey(CallOverDetail)
+
+
+class Audios(models.Model):
+    audio = models.FileField(upload_to='CallOverAudio')
+    date = models.DateTimeField(auto_now_add=True)
+    parent = models.ForeignKey(CallOverDetail)
