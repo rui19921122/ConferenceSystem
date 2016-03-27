@@ -13,22 +13,20 @@ Including another URLconf
     1. Add an import:  from blog import urls as blog_urls
     2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
+from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
 
-api_url = [
-    url(r'^auth/', include('rest_auth.urls')),
-    url(r'^class_plan/', include('class_plan.urls')),
-    url(r'^study/', include('professionalStudy.urls')),
-    url(r'^menu/', include('base.urls')),
-    url(r'^worker/', include('worker.urls')),
-    url(r'^upload/', include('upload.urls')),
-    url(r'^accident/', include('accidentCase.urls')),
-    url(r'^call_over/', include('call_over.urls')),
-]
-
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^api/', include(api_url)),
     url(r'^', include('rest_framework_docs.urls')),
+    url(r'^api/auth/', include('rest_auth.urls')),
+    url(r'^api/class_plan/', include('class_plan.urls')),
+    url(r'^api/study/', include('professionalStudy.urls')),
+    url(r'^api/menu/', include('base.urls')),
+    url(r'^api/worker/', include('worker.urls')),
+    url(r'^api/upload/', include('upload.urls')),
+    url(r'^api/accident/', include('accidentCase.urls')),
+    url(r'^api/call_over/', include('call_over.urls')),
+    url(r'^api/media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
 ]

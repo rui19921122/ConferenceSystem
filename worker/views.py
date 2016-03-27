@@ -53,4 +53,5 @@ class PositionListView(ListCreateAPIView):
 
 class PositionDetailView(RetrieveUpdateDestroyAPIView):
     serializer_class = PositionSerial
+    queryset = Position.objects.all()
     # todo 增加权限管理

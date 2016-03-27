@@ -3,6 +3,7 @@ from rest_framework import serializers
 from . import models
 
 
+
 class WorkerSerial(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     class_number = serializers.IntegerField(allow_null=True)

@@ -46,8 +46,12 @@ INSTALLED_APPS = (
     'checkIn',
     'rest_framework_docs',
     'upload',
-    'call_over'
+    'call_over',
 )
+
+REST_FRAMEWORK_DOCS = {
+    'HIDE_DOCS': False
+}
 
 MIDDLEWARE_CLASSES = (
     'ConferenceSystem.MiddleWare.DisableCSRFCheck',
@@ -122,3 +126,4 @@ REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/api/media/'
