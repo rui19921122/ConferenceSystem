@@ -39,7 +39,7 @@ class CallOverDetailSer(serializers.Serializer):
 class PhotoSer(serializers.ModelSerializer):
     class Meta:
         model = Photos
-        fields = ('audio', 'date')
+        fields = ('photo', 'date')
 
 
 class AudioSer(serializers.ModelSerializer):
