@@ -1,24 +1,31 @@
+import ctypes
 import datetime
 
-from django.http import request
+from django.core import exceptions
 from django.db.models import Q
-from django.shortcuts import render
 from rest_framework import status, generics
-from rest_framework.views import APIView
 from rest_framework.request import Request
 from rest_framework.response import Response
-from .serialzation import CallOverDetailSer, PhotoSer, AudioSer, WorkerSer, CallOverSer
-from .models import CallOverDetail
-from professionalStudy.models import ProfessionalStudy
+from rest_framework.views import APIView
+
 from accidentCase.models import Accident
+from accidentCase.serization import AccidentSerializer
 from class_plan.models import ClassPlanDayTable
 from class_plan.serialzation import ClassPlanDayTable as ClassPlanDayTableSer
-from accidentCase.serization import AccidentSerializer
+from professionalStudy.models import ProfessionalStudy
 from professionalStudy.serialzation import ProfessionalStudySerializer
+from worker.models import AttentionTable, Worker, AttentionDetail
+from .models import CallOverDetail
 from .models import CallOverNumber
 from .permission import OnlyOwnerDepartmentCanRead
+from .serialzation import PhotoSer, AudioSer, WorkerSer, CallOverSer, AttentionSer, AttentionsDetailSer
 
-import time
+windll = ctypes.windll.LoadLibrary(r'C:\Users\Administrator\Desktop\ConferenceSystem\JZTDevDll.dll')
+
+
+def exam_equal_figure(source, string):
+    f = windll.FPIMatch(source.encode('utf-8'), string.encode('utf-8'), 3)
+    return True if f >= 0 else False
 
 
 def get_current_class():
@@ -194,7 +201,7 @@ class ListClassOverByDepartment(generics.ListAPIView, generics.GenericAPIView):
     serializer_class = CallOverSer
     permission_classes = (OnlyOwnerDepartmentCanRead,)
 
-    def list(self, request: request.HttpRequest, *args, **kwargs):
+    def list(self, request: Request, *args, **kwargs):
         begin_time = request.GET.get('start', default=datetime.date.today())
         end_time = request.GET.get('end', default=datetime.date.today())
         if request.user.is_superuser:
@@ -203,4 +210,84 @@ class ListClassOverByDepartment(generics.ListAPIView, generics.GenericAPIView):
             obj = CallOverDetail.objects.filter(department=request.user.user.department,
                                                 date__lte=end_time,
                                                 date__gte=begin_time)
-        return Response(data=CallOverSer(obj, many=True).data,status=status.HTTP_200_OK)
+        return Response(data=CallOverSer(obj, many=True).data, status=status.HTTP_200_OK)
+
+
+class GetCallOverPerson(generics.ListAPIView, generics.GenericAPIView):
+    queryset = AttentionTable
+    serializer_class = AttentionSer
+
+    def list(self, request: Request, *args, **kwargs):
+        default = get_current_class()
+        date = request.GET.get('date', default=default.date)
+        day_number = default.day_number
+        department = request.user.user.department
+        try:
+            attention_table = AttentionTable.objects.get(date=date, day_number=day_number, department=department)
+
+        except exceptions.ObjectDoesNotExist:
+            department = request.user.user.department
+            workers = Worker.objects.filter(position__department=request.user.user.department)
+            attention_table = AttentionTable(department=department, date=date, day_number=day_number, lock=False)
+            attention_table.save()
+            for worker in workers:
+                new = AttentionDetail(
+                    worker=worker,
+                    position=worker.position,
+                    study=worker.is_study,
+                )
+                new.save()
+                attention_table.person.add(new)
+        return Response(data=self.get_serializer_class()(attention_table).data, status=status.HTTP_200_OK)
+
+
+class GetCallOverPersonDetail(APIView):
+    def get(self, request: Request, *args, **kwargs):
+        department = request.user.user.department
+        try:
+            attention_number = self.request.GET.get('number')
+        except:
+            return Response(data={"error": "number字符串缺失"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            obj = AttentionTable.objects.get(pk=attention_number)
+        except:
+            return Response(data={"error": "未找到相关预点名信息"}, status=status.HTTP_404_NOT_FOUND)
+        if obj.department != department:
+            return Response(data={"error": "无权访问"}, status=status.HTTP_403_FORBIDDEN)
+        ser = AttentionsDetailSer(obj.person.all(), many=True)
+        return Response(data=ser.data, status=status.HTTP_200_OK)
+
+
+class PostFigureData(APIView):
+    def post(self, request: Request, *args, **kwargs):
+        department = request.user.user.department
+        figure_data = request.POST.get('figure_data')
+        number = request.POST.get('number')
+        print(type(figure_data))
+        if not figure_data:
+            return Response(data={'error': 'figure_data字段缺失'}, status=status.HTTP_400_BAD_REQUEST)
+        if not number:
+            return Response(data={'error': 'number字段缺失'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            obj = AttentionTable.objects.get(pk=number)
+        except:
+            return Response(data={"error": "未找到相关预点名信息"}, status=status.HTTP_404_NOT_FOUND)
+        if obj.department != department:
+            return Response(data={"error": "无权访问"}, status=status.HTTP_403_FORBIDDEN)
+        correct_person = None
+        for person in obj.person.all():
+            _figure = person.worker.figures.all()
+            if len(_figure) == 0:
+                continue
+            else:
+                for single_figure in _figure:
+                    if exam_equal_figure(single_figure.modal, figure_data):
+                        correct_person = person
+                        break
+        if correct_person:
+            correct_person.checked = datetime.datetime.now()
+            correct_person.save()
+            print(correct_person.checked)
+            return Response(data={'people': correct_person.worker_id}, status=status.HTTP_201_CREATED)
+        else:
+            return Response(data={'error': '未找到相关指纹信息'}, status=status.HTTP_404_NOT_FOUND)

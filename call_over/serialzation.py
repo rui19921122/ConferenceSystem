@@ -1,13 +1,11 @@
-import datetime
-
 from rest_framework import serializers
 from rest_framework.relations import RelatedField
 
+from accidentCase.serization import AccidentSerializer
 from class_plan.serialzation import ClassPlanDayTable
 from professionalStudy.serialzation import ProfessionalStudySerializer
-from worker.models import Worker
+from worker.models import Worker, AttentionTable, AttentionDetail
 from .models import Photos, Audios, CallOverDetail
-from accidentCase.serization import AccidentSerializer
 
 
 class SlugUserNameRelatedField(RelatedField):
@@ -62,3 +60,18 @@ class WorkerSer(serializers.ModelSerializer):
     class Meta:
         model = Worker
         fields = '__all__'
+
+
+class AttentionSer(serializers.ModelSerializer):
+    class Meta:
+        model = AttentionTable
+        fields = '__all__'
+
+
+class AttentionsDetailSer(serializers.ModelSerializer):
+    worker = serializers.SlugRelatedField(slug_field='name', read_only=True)
+    position = serializers.SlugRelatedField(slug_field='name', read_only=True)
+
+    class Meta:
+        model = AttentionDetail
+        exclude = ('raw_string',)

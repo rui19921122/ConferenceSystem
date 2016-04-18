@@ -43,3 +43,4 @@ class CallOverNumber(models.Model):
 
     class Meta:
         unique_together = (('date', 'day_number'),)
+
