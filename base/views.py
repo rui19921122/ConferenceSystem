@@ -1,8 +1,6 @@
-from django.shortcuts import render
 from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 
 # Create your views here.
@@ -49,3 +47,10 @@ class Menu(APIView):
                 , status=status.HTTP_200_OK)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+class get_user_detail(APIView):
+    def get(self, request):
+        user = request.user.user
+        return Response(data={'name': user.name, 'department': user.department.name},
+                        status=status.HTTP_200_OK)

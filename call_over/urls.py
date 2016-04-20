@@ -10,4 +10,5 @@ urlpatterns = [
     url(r'^get-call-over-person/$', view=GetCallOverPerson.as_view(), name='get-call-over-person'),
     url(r'^get-call-over-person-detail/$', view=GetCallOverPersonDetail.as_view(), name='get-call-over-person-detail'),
     url(r'^post-figure/$', view=PostFigureData.as_view(), name='post-figure'),
+    url(r'^lock-call-over-person/$', view=LockCallOverPerson.as_view(), name='lock-call-over-person'),
 ]

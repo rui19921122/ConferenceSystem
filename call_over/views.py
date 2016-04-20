@@ -79,10 +79,16 @@ class BeginCallOver(APIView):
             default_class_number = get_current_class()
         except:
             return Response('不是规定的时间段', status=status.HTTP_400_BAD_REQUEST)
+        default = get_current_class()
         today = datetime.datetime.today()
-        number = str(request.data.get('number'))
+        try:
+            locked = AttentionTable.objects.get(date=default.date, department=department, day_number=default.day_number)
+        except:
+            return Response("未找到相关的预点名信息", status=status.HTTP_404_NOT_FOUND)
+        if not locked:
+            return Response("出勤表未锁定，无法进行点名", status=status.HTTP_400_BAD_REQUEST)
+        number = str(request.data.get('number', default.class_number))
         query = mapNumberToQuery[number]
-        unused = request.data.get('unused')
         # 处理添加相关人员
         exist = CallOverDetail.objects.filter(department=department,
                                               date=today,
@@ -94,8 +100,6 @@ class BeginCallOver(APIView):
                                                 class_number=number,
                                                 day_number=default_class_number.day_number)
             pk = new.pk
-            for person in unused:
-                new.attend_person_unused.add(person)
             exist = new
         else:
             exist = exist[0]
@@ -221,13 +225,14 @@ class GetCallOverPerson(generics.ListAPIView, generics.GenericAPIView):
         default = get_current_class()
         date = request.GET.get('date', default=default.date)
         day_number = default.day_number
+        class_number = default.class_number
         department = request.user.user.department
         try:
             attention_table = AttentionTable.objects.get(date=date, day_number=day_number, department=department)
 
         except exceptions.ObjectDoesNotExist:
             department = request.user.user.department
-            workers = Worker.objects.filter(position__department=request.user.user.department)
+            workers = Worker.objects.filter(position__department=request.user.user.department,class_number=class_number)
             attention_table = AttentionTable(department=department, date=date, day_number=day_number, lock=False)
             attention_table.save()
             for worker in workers:
@@ -263,7 +268,6 @@ class PostFigureData(APIView):
         department = request.user.user.department
         figure_data = request.POST.get('figure_data')
         number = request.POST.get('number')
-        print(type(figure_data))
         if not figure_data:
             return Response(data={'error': 'figure_data字段缺失'}, status=status.HTTP_400_BAD_REQUEST)
         if not number:
@@ -274,6 +278,8 @@ class PostFigureData(APIView):
             return Response(data={"error": "未找到相关预点名信息"}, status=status.HTTP_404_NOT_FOUND)
         if obj.department != department:
             return Response(data={"error": "无权访问"}, status=status.HTTP_403_FORBIDDEN)
+        if not obj.lock:
+            return Response(data={"error": "尚未锁定出勤表，无法采集指纹"}, status=status.HTTP_403_FORBIDDEN)
         correct_person = None
         for person in obj.person.all():
             _figure = person.worker.figures.all()
@@ -285,9 +291,27 @@ class PostFigureData(APIView):
                         correct_person = person
                         break
         if correct_person:
+            if correct_person.checked:
+                return Response(data={'error': '该人员已登陆过，请不要采集两次指纹'}, status=status.HTTP_400_BAD_REQUEST)
             correct_person.checked = datetime.datetime.now()
             correct_person.save()
-            print(correct_person.checked)
-            return Response(data={'people': correct_person.worker_id}, status=status.HTTP_201_CREATED)
+            progress = obj.person.filter(study=False, checked__isnull=False).count() / obj.person.all().count()
+            return Response(data={'people': correct_person.worker.name}, status=status.HTTP_201_CREATED)
         else:
             return Response(data={'error': '未找到相关指纹信息'}, status=status.HTTP_404_NOT_FOUND)
+
+
+class LockCallOverPerson(APIView):
+    permission_classes = (OnlyOwnerDepartmentCanRead,)
+
+    def post(self, request: Request, *args, **kwargs):
+        number = request.POST.get('number')
+        try:
+            attention_table = AttentionTable.objects.get(pk=number)
+        except Exception:
+            return Response(data={'error': '未找到相关出勤表信息'}, status=status.HTTP_404_NOT_FOUND)
+        if attention_table.lock:
+            return Response(data={'detail': '表已锁定，请不要重复操作，可以开始点名'}, status=status.HTTP_200_OK)
+        attention_table.lock = True
+        attention_table.save()
+        return Response(status=status.HTTP_201_CREATED)

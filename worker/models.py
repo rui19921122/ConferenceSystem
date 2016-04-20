@@ -14,16 +14,37 @@ class Worker(models.Model):
 class Figure(models.Model):
     modal = models.CharField(max_length=513, verbose_name='指纹模型')
     weight = models.PositiveSmallIntegerField(null=True, verbose_name='习惯权重')
+    name = models.CharField(max_length=5, choices=(
+        ('左手大拇指', '左手大拇指'),
+        ('左手食指', '左手食指'),
+        ('左手中指', '左手中指'),
+        ('左手无名指', '左手无名指'),
+        ('左手小拇指', '左手小拇指'),
+        ('右手大拇指', '右手大拇指'),
+        ('右手食指', '右手食指'),
+        ('右手中指', '右手中指'),
+        ('右手无名指', '右手无名指'),
+        ('右手小拇指', '右手小拇指'),
+    ))
 
     class Meta:
         ordering = ('weight',)
 
 
+class FigureSetting(models.Model):
+    # 控制部门是否可以采集或变更指纹的行为
+    department = models.OneToOneField('base.Department')
+    can_add = models.BooleanField(default=False)
+    can_delete = models.BooleanField(default=False)
+
+
 class Position(models.Model):
     name = models.CharField(max_length=15)
     department = models.ForeignKey('base.Department')
-    number = models.PositiveSmallIntegerField(default=1)
+    number = models.PositiveSmallIntegerField(verbose_name='定员数')
 
+    class Meta:
+        unique_together = ('name', 'department')
 
 class AttentionTable(models.Model):
     department = models.ForeignKey('base.Department')

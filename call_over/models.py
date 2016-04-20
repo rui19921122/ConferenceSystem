@@ -7,8 +7,6 @@ from django.contrib.auth.models import User
 class CallOverDetail(models.Model):
     department = models.ForeignKey('base.Department')
     host_person = models.ForeignKey(User)
-    attend_person_unused = models.ManyToManyField('worker.Worker', related_name='unused_worker')
-    attend_person_used = models.ManyToManyField('worker.Worker', related_name='used_worker')
     begin_time = models.TimeField(auto_now_add=True)
     end_time = models.TimeField(null=True, blank=True)
     date = models.DateField(auto_now_add=True)
