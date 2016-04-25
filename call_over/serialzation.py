@@ -62,12 +62,6 @@ class WorkerSer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AttentionSer(serializers.ModelSerializer):
-    class Meta:
-        model = AttentionTable
-        fields = '__all__'
-
-
 class AttentionsDetailSer(serializers.ModelSerializer):
     worker = serializers.SlugRelatedField(slug_field='name', read_only=True)
     position = serializers.SlugRelatedField(slug_field='name', read_only=True)
@@ -75,3 +69,12 @@ class AttentionsDetailSer(serializers.ModelSerializer):
     class Meta:
         model = AttentionDetail
         exclude = ('raw_string',)
+
+
+class AttentionSer(serializers.ModelSerializer):
+    department = serializers.SlugRelatedField(read_only=True, slug_field='name')
+    person = AttentionsDetailSer(many=True)
+
+    class Meta:
+        model = AttentionTable
+        fields = '__all__'

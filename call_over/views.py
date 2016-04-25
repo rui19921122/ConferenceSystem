@@ -14,7 +14,7 @@ from class_plan.models import ClassPlanDayTable
 from class_plan.serialzation import ClassPlanDayTable as ClassPlanDayTableSer
 from professionalStudy.models import ProfessionalStudy
 from professionalStudy.serialzation import ProfessionalStudySerializer
-from worker.models import AttentionTable, Worker, AttentionDetail
+from worker.models import AttentionTable, Worker, AttentionDetail, Position
 from .models import CallOverDetail
 from .models import CallOverNumber
 from .permission import OnlyOwnerDepartmentCanRead
@@ -223,16 +223,17 @@ class GetCallOverPerson(generics.ListAPIView, generics.GenericAPIView):
 
     def list(self, request: Request, *args, **kwargs):
         default = get_current_class()
+        print(request.GET)
         date = request.GET.get('date', default=default.date)
-        day_number = default.day_number
-        class_number = default.class_number
+        day_number = request.GET.get('day-number', default=default.day_number)
         department = request.user.user.department
         try:
             attention_table = AttentionTable.objects.get(date=date, day_number=day_number, department=department)
-
         except exceptions.ObjectDoesNotExist:
             department = request.user.user.department
-            workers = Worker.objects.filter(position__department=request.user.user.department,class_number=class_number)
+            workers = Worker.objects.filter(position__department=request.user.user.department,
+                                            class_number=CallOverNumber.objects.get(date=date,
+                                                                                    day_number=day_number).class_number)
             attention_table = AttentionTable(department=department, date=date, day_number=day_number, lock=False)
             attention_table.save()
             for worker in workers:
@@ -244,6 +245,63 @@ class GetCallOverPerson(generics.ListAPIView, generics.GenericAPIView):
                 new.save()
                 attention_table.person.add(new)
         return Response(data=self.get_serializer_class()(attention_table).data, status=status.HTTP_200_OK)
+
+
+class UpdateCallOverPerson(APIView):
+    """
+        用于更改未被锁定的考勤表职工情况，其中，学员只能被删除，非学员的职位只能被替换，替换参数为replace,内容为职工ID
+    """
+    permission_classes = (OnlyOwnerDepartmentCanRead,)
+
+    def post(self, request: Request, id, *args, **kwargs):
+        attention_detail = AttentionDetail.objects.get(pk=id)
+        if attention_detail.attentiontable_set.first().lock:
+            return Response(data={'error': '考勤表已锁定，无法更改'}, status=status.HTTP_400_BAD_REQUEST)
+        replace_id = request.data.get('replace')
+        print(replace_id)
+        try:
+            replace_worker = Worker.objects.get(pk=replace_id)
+        except exceptions.ObjectDoesNotExist:
+            return Response(data={'error': '无法找到对应的职工'}, status=status.HTTP_400_BAD_REQUEST)
+        if replace_worker.position.department == attention_detail.position.department:
+            attention_detail.worker = replace_worker
+            attention_detail.save()
+            return Response(status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(data={'error': '无法找到对应的职工'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request: Request, id, *args, **kwargs):
+        attention_detail = AttentionDetail.objects.get(pk=id)
+        if attention_detail.attentiontable_set.first().lock:
+            return Response(data={'error': '考勤表已锁定，无法更改'}, status=status.HTTP_400_BAD_REQUEST)
+        if not attention_detail.study:
+            return Response(data={'error': '非学员的项目不能删除'}, status=status.HTTP_400_BAD_REQUEST)
+        attention_detail.delete()
+        return Response(status=status.HTTP_202_ACCEPTED)
+
+
+class AddCallOverPerson(APIView):
+    """
+        向考勤表中增加信息，只能增加学员
+        position:position_id,
+        worker:worker_id
+    """
+    permission_classes = (OnlyOwnerDepartmentCanRead,)
+
+    def post(self, request: Request, id, *args, **kwargs):
+        _position = request.data.get('position')
+        _worker = request.data.get('worker')
+        attention_table = AttentionTable.objects.get(pk=id)
+        position = Position.objects.get(id=_position)
+        worker = Worker.objects.get(id=_worker)
+        department = request.user.user.department
+        if (position.department == department) and (attention_table.department == department) and (
+                    worker.position.department == department):
+            return Response(data={'error': '错误的部门信息'}, status=status.HTTP_400_BAD_REQUEST)
+        new = AttentionDetail(worker=worker, position=position, study=True)
+        new.save()
+        attention_table.person.add(new)
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class GetCallOverPersonDetail(APIView):

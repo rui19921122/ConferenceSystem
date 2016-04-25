@@ -15,15 +15,7 @@ class Menu(APIView):
             return Response(
                 [{'type': 'single', 'name': '首页', 'href': 'loginIn', 'key': 'index'},
                  {
-                     'type': 'single', 'name': '开始点名', 'href': 'begin', 'key': 'begin'
-                 },
-                 {
-                     'type': 'multiple', 'name': '班计划管理', 'href': 'class-plan', 'key': 'plan0',
-                     'children': [
-                         {'type': 'single', 'name': '管理班计划', 'href': 'manage-class-plan', 'key': 'plan1'},
-                         {'type': 'single', 'name': '增加班计划', 'href': 'add-class-plan', 'key': 'plan2'},
-                         {'type': 'single', 'name': '查询班计划', 'href': 'query-class-plan', 'key': 'plan3'},
-                     ]
+                     'type': 'single', 'name': '班计划管理查询', 'href': 'class-plan', 'key': 'plan0',
                  },
                  {
                      'type': 'multiple', 'name': '事故案例', 'href': 'accident', 'key': 'risk0',
@@ -39,6 +31,14 @@ class Menu(APIView):
                          {'type': 'single', 'name': '管理业务学习', 'href': 'manage-study', 'key': 'study1'},
                          {'type': 'single', 'name': '新增业务学习', 'href': 'add-study', 'key': 'study2'},
                          {'type': 'single', 'name': '业务学习情况查询', 'href': 'query-study', 'key': 'study3'}
+                     ]
+                 },
+                 {
+                     'type': 'multiple', 'name': '考勤管理', 'href': 'check', 'key': 'check0',
+                     'children': [
+                         {'type': 'single', 'name': '考勤情况预处理', 'href': 'manage-check', 'key': 'check1'},
+                         {'type': 'single', 'name': '历史考勤情况查询', 'href': 'query-check', 'key': 'check2'},
+                         {'type': 'single', 'name': '职工管理', 'href': 'manage-worker', 'key': 'check3'}
                      ]
                  },
                  {
