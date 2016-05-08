@@ -6,9 +6,17 @@ class Worker(models.Model):
     name = models.CharField(max_length=15, verbose_name='姓名', unique=True)
     position = models.ForeignKey('worker.Position')
     is_study = models.BooleanField(default=False)
-    alter = models.BooleanField(default=False)
-    class_number = models.PositiveSmallIntegerField(null=True, blank=True)
-    figures = models.ManyToManyField('worker.Figure', verbose_name='指纹库')
+    class_number = models.PositiveSmallIntegerField(null=True, blank=True, choices=(
+        (0, '替班'),
+        (1, '一班'),
+        (2, '二班'),
+        (3, '三班'),
+        (4, '四班'),
+    ))
+    figures = models.ManyToManyField('worker.Figure', verbose_name='指纹库', blank=True, editable=False)
+
+    def __str__(self):
+        return self.name
 
 
 class Figure(models.Model):
@@ -45,6 +53,7 @@ class Position(models.Model):
 
     class Meta:
         unique_together = ('name', 'department')
+
 
 class AttentionTable(models.Model):
     department = models.ForeignKey('base.Department')

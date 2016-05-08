@@ -42,7 +42,6 @@ class GetDefaultClassNumber(APIView):
         :param request:Request
         :return:
         '''
-        print(get_current_class().class_number)
         user = request.user
         if user.is_authenticated():
             try:
@@ -218,12 +217,13 @@ class ListClassOverByDepartment(generics.ListAPIView, generics.GenericAPIView):
 
 
 class GetCallOverPerson(generics.ListAPIView, generics.GenericAPIView):
+    '''
+    '''
     queryset = AttentionTable
     serializer_class = AttentionSer
 
     def list(self, request: Request, *args, **kwargs):
         default = get_current_class()
-        print(request.GET)
         date = request.GET.get('date', default=default.date)
         day_number = request.GET.get('day-number', default=default.day_number)
         department = request.user.user.department
@@ -244,13 +244,21 @@ class GetCallOverPerson(generics.ListAPIView, generics.GenericAPIView):
                 )
                 new.save()
                 attention_table.person.add(new)
-        return Response(data=self.get_serializer_class()(attention_table).data, status=status.HTTP_200_OK)
+        can_add_workers = Worker.objects.all()
+        had_attention = attention_table.person.all()
+        for worker in had_attention:
+            can_add_workers = can_add_workers.exclude(pk=worker.worker_id)
+        can_add_workers.filter(position__department=request.user.user.department)
+        return Response(data={'attend': self.get_serializer_class()(attention_table).data,
+                              'replace': WorkerSer(can_add_workers, many=True).data},
+                        status=status.HTTP_200_OK)
 
 
 class UpdateCallOverPerson(APIView):
     """
         用于更改未被锁定的考勤表职工情况，其中，学员只能被删除，非学员的职位只能被替换，替换参数为replace,内容为职工ID
     """
+    #todo 目前没有卡控已有的人员重复录制的问题
     permission_classes = (OnlyOwnerDepartmentCanRead,)
 
     def post(self, request: Request, id, *args, **kwargs):
@@ -297,10 +305,13 @@ class AddCallOverPerson(APIView):
         department = request.user.user.department
         if (position.department == department) and (attention_table.department == department) and (
                     worker.position.department == department):
+            pass
+        else:
             return Response(data={'error': '错误的部门信息'}, status=status.HTTP_400_BAD_REQUEST)
         new = AttentionDetail(worker=worker, position=position, study=True)
         new.save()
         attention_table.person.add(new)
+        print(attention_table.person.all())
         return Response(status=status.HTTP_201_CREATED)
 
 
@@ -373,3 +384,23 @@ class LockCallOverPerson(APIView):
         attention_table.lock = True
         attention_table.save()
         return Response(status=status.HTTP_201_CREATED)
+
+
+class GetWorkerCanAdd(APIView):
+    '''
+    返回可以向该点名表中添加的人员列表，超级管理员无法使用
+    '''
+
+    def get(self, request: Request, id, *args, **kwargs):
+        number = id
+        try:
+            attention_table = AttentionTable.objects.get(pk=number)
+        except Exception:
+            return Response(data={'error': '未找到相关出勤表信息'}, status=status.HTTP_404_NOT_FOUND)
+        if attention_table.lock:
+            return Response(data={'detail': '表已锁定，请不要重复操作，可以开始点名'}, status=status.HTTP_200_OK)
+        workers = Worker.objects.filter(position__department=request.user.user.department)
+        had_attention = attention_table.person.all()
+        for worker in had_attention:
+            workers.exclude(pk=worker.pk)
+        return Response(data=WorkerSer(workers, many=True).data, status=status.HTTP_200_OK)
