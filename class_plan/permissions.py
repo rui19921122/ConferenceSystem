@@ -23,8 +23,7 @@ class IsAllowedOrReadOnly(BasePermission):
         else:
             allowed_department = WhichDepartmentCanEditClassPlan.objects.all()
             user = request.user
-            if allowed_department.filter(department=user.user.department).exists() or \
-                    user.is_superuser:
+            if allowed_department.filter(department=user.user.department).exists():
                 return True
             else:
                 return False

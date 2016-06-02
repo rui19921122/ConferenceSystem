@@ -16,10 +16,11 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
+from base.views import mainView
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^', include('rest_framework_docs.urls')),
+    url(r'^docs/', include('rest_framework_docs.urls')),
     url(r'^api/auth/', include('rest_auth.urls')),
     url(r'^api/class_plan/', include('class_plan.urls')),
     url(r'^api/study/', include('professionalStudy.urls')),
@@ -29,4 +30,5 @@ urlpatterns = [
     url(r'^api/accident/', include('accidentCase.urls')),
     url(r'^api/call_over/', include('call_over.urls')),
     url(r'^api/media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
+    url(r'^$', mainView)
 ]

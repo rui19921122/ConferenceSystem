@@ -35,7 +35,7 @@ class ClassPlanDayTable(serializers.ModelSerializer):
 
     class Meta:
         model = models.ClassPlanDayTable
-        fields = ('publish_person', 'publish_time', 'time', 'day_detail')
+        fields = ('publish_person', 'publish_time', 'time', 'day_detail', 'lock')
 
     def create(self, validated_data):
         day_detail = validated_data.pop('day_detail')

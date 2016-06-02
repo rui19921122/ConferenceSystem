@@ -12,6 +12,7 @@ class ClassPlanDayTable(models.Model):
     publish_person = models.ForeignKey(User)
     publish_time = models.DateTimeField(auto_now_add=True)
     time = models.DateField()
+    lock = models.BooleanField(default=False)
 
 
 class ClassPlanDayDetail(models.Model):

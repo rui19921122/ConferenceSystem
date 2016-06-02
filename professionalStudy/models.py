@@ -7,7 +7,8 @@ from django.utils.datetime_safe import datetime
 class ProfessionalStudy(models.Model):
     publish_time = models.DateTimeField(auto_now_add=True)
     publish_person = models.ForeignKey(User)
-    content = models.TextField()
+    title = models.TextField(verbose_name='标题')
+    answer = models.TextField(verbose_name='答案', blank=True)
     checked_by_first = models.ForeignKey('call_over.CallOverDetail', blank=True, null=True,
                                          related_name='study_first')
     checked_by_second = models.ForeignKey('call_over.CallOverDetail', blank=True, null=True,
@@ -33,3 +34,4 @@ class ProfessionalStudy(models.Model):
     def save(self, *args, **kwargs):
         self.department = self.publish_person.user.department
         super(ProfessionalStudy, self).save(*args, **kwargs)
+

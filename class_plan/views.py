@@ -34,7 +34,7 @@ class ClassPlan(APIView):
             serialzation_data.save()
             return Response(serialzation_data.data, status=status.HTTP_201_CREATED)
         else:
-            print(serialzation_data.errors)
+            return Response(serialzation_data.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ClassPlanByDate(generics.RetrieveUpdateDestroyAPIView):

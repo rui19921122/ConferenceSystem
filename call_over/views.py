@@ -4,6 +4,7 @@ import datetime
 from django.core import exceptions
 from django.db.models import Q
 from rest_framework import status, generics
+from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -20,7 +21,7 @@ from .models import CallOverNumber
 from .permission import OnlyOwnerDepartmentCanRead
 from .serialzation import PhotoSer, AudioSer, WorkerSer, CallOverSer, AttentionSer, AttentionsDetailSer
 
-windll = ctypes.windll.LoadLibrary(r'C:\Users\Administrator\Desktop\ConferenceSystem\JZTDevDll.dll')
+windll = ctypes.windll.JZTDevDll
 
 
 def exam_equal_figure(source, string):
@@ -65,6 +66,10 @@ mapNumberToQuery = {
 
 
 class BeginCallOver(APIView):
+    '''
+        开始点名，无必须field
+    '''
+
     def post(self, request):
         '''
         :param request:Request
@@ -97,6 +102,7 @@ class BeginCallOver(APIView):
             new = CallOverDetail.objects.create(department=department,
                                                 host_person=user,
                                                 class_number=number,
+                                                attend_table=AttentionTable,
                                                 day_number=default_class_number.day_number)
             pk = new.pk
             exist = new
@@ -105,6 +111,9 @@ class BeginCallOver(APIView):
             pk = exist.pk
             try:
                 class_plan = ClassPlanDayTable.objects.get(time=today)
+                if class_plan.lock == False:  # 如果班计划表未锁定，则对其进行锁定
+                    class_plan.lock = True
+                    class_plan.save()
             except:
                 class_plan = None
             args_not_need_edit = {'department': department,
@@ -250,6 +259,8 @@ class GetCallOverPerson(generics.ListAPIView, generics.GenericAPIView):
             can_add_workers = can_add_workers.exclude(pk=worker.worker_id)
         can_add_workers.filter(position__department=request.user.user.department)
         return Response(data={'attend': self.get_serializer_class()(attention_table).data,
+                              'id': attention_table.id,
+                              'lock': attention_table.lock,
                               'replace': WorkerSer(can_add_workers, many=True).data},
                         status=status.HTTP_200_OK)
 
@@ -258,7 +269,7 @@ class UpdateCallOverPerson(APIView):
     """
         用于更改未被锁定的考勤表职工情况，其中，学员只能被删除，非学员的职位只能被替换，替换参数为replace,内容为职工ID
     """
-    #todo 目前没有卡控已有的人员重复录制的问题
+    # todo 目前没有卡控已有的人员重复录制的问题
     permission_classes = (OnlyOwnerDepartmentCanRead,)
 
     def post(self, request: Request, id, *args, **kwargs):
@@ -404,3 +415,21 @@ class GetWorkerCanAdd(APIView):
         for worker in had_attention:
             workers.exclude(pk=worker.pk)
         return Response(data=WorkerSer(workers, many=True).data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def call_over_note(request, id):
+    if not request.user.is_authenticated():
+        return Response(data={'error': 'login required'}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        call_over = CallOverDetail.objects.get(pk=id)
+    except:
+        return Response(data={'error': '未找到相关点名表信息'}, status=status.HTTP_404_NOT_FOUND)
+    if call_over.department == request.user.user.department:
+        data = request.data.get('data', '')
+        print(data)
+        call_over.note = data
+        call_over.save()
+        return Response(status=status.HTTP_201_CREATED)
+    else:
+        return Response(data={'error': 'no permission'}, status=status.HTTP_400_BAD_REQUEST)

@@ -11,9 +11,10 @@ urlpatterns = [
     url(r'^get-call-over-person-detail/$', view=GetCallOverPersonDetail.as_view(), name='get-call-over-person-detail'),
     url(r'^post-figure/$', view=PostFigureData.as_view(), name='post-figure'),
     url(r'^lock-call-over-person/$', view=LockCallOverPerson.as_view(), name='lock-call-over-person'),
-    url(r'^update-call-over-person/(?P<id>\d{1,8})$', view=UpdateCallOverPerson.as_view(),
+    url(r'^update-call-over-person/(?P<id>\d{1,8})/$', view=UpdateCallOverPerson.as_view(),
         name='update-call-over-person'),
-    url(r'^add-call-over-person/(?P<id>\d{1,8})$', view=AddCallOverPerson.as_view(), name='add-call-over-person'),
-    url(r'^get-can-add-call-over-person/(?P<id>\d{1,8})$', view=GetWorkerCanAdd.as_view(),
+    url(r'^add-call-over-person/(?P<id>\d{1,8})/$', view=AddCallOverPerson.as_view(), name='add-call-over-person'),
+    url(r'^get-can-add-call-over-person/(?P<id>\d{1,8})/$', view=GetWorkerCanAdd.as_view(),
         name='add-call-over-person'),
+    url(r'^call-over-note/(?P<id>\d{1,8})/$', view=call_over_note, name='call_over_note'),
 ]

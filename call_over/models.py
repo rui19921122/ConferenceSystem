@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from worker.models import AttentionTable
 
 
 # Create your models here.
@@ -10,6 +11,8 @@ class CallOverDetail(models.Model):
     begin_time = models.TimeField(auto_now_add=True)
     end_time = models.TimeField(null=True, blank=True)
     date = models.DateField(auto_now_add=True)
+    note = models.TextField(null=True, blank=True)
+    attend_table = models.ForeignKey(AttentionTable, null=True)
     class_number = models.SmallIntegerField(choices=(
         (1, 1), (2, 2), (3, 3), (4, 4)
     ))
@@ -41,4 +44,3 @@ class CallOverNumber(models.Model):
 
     class Meta:
         unique_together = (('date', 'day_number'),)
-

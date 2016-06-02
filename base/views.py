@@ -1,3 +1,4 @@
+from django.shortcuts import render
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -21,7 +22,6 @@ class Menu(APIView):
                      'type': 'multiple', 'name': '事故案例', 'href': 'accident', 'key': 'risk0',
                      'children': [
                          {'type': 'single', 'name': '管理事故案例', 'href': 'manage-accident', 'key': 'risk1'},
-                         {'type': 'single', 'name': '增加事故案例', 'href': 'add-accident', 'key': 'risk2'},
                          {'type': 'single', 'name': '事故案例学习情况查询', 'href': 'query-accident', 'key': 'risk3'}
                      ]
                  },
@@ -29,7 +29,6 @@ class Menu(APIView):
                      'type': 'multiple', 'name': '业务学习', 'href': 'study', 'key': 'study0',
                      'children': [
                          {'type': 'single', 'name': '管理业务学习', 'href': 'manage-study', 'key': 'study1'},
-                         {'type': 'single', 'name': '新增业务学习', 'href': 'add-study', 'key': 'study2'},
                          {'type': 'single', 'name': '业务学习情况查询', 'href': 'query-study', 'key': 'study3'}
                      ]
                  },
@@ -38,9 +37,9 @@ class Menu(APIView):
                      'children': [
                          {'type': 'single', 'name': '考勤情况预处理', 'href': 'manage-check', 'key': 'check1'},
                          {'type': 'single', 'name': '历史考勤情况查询', 'href': 'query-check', 'key': 'check2'},
-                         {'type': 'single', 'name': '职工管理', 'href': 'manage-worker', 'key': 'check3'}
                      ]
                  },
+                 {'type': 'single', 'name': '职工管理', 'href': 'manage-worker', 'key': 'worker'},
                  {
                      'type': 'single', 'name': '点名会综合查询', 'href': 'query', 'key': 'query0'
                  }]
@@ -54,3 +53,7 @@ class get_user_detail(APIView):
         user = request.user.user
         return Response(data={'name': user.name, 'department': user.department.name},
                         status=status.HTTP_200_OK)
+
+
+def mainView(request):
+    return render(request, template_name='index.html')
