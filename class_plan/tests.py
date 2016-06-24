@@ -4,7 +4,6 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase
 
 from base.models import Person, Department
-from base.models import ProfessionalSystem
 from class_plan.models import WhichDepartmentCanEditClassPlan
 from . import models
 from .data_for_test import publish_class_plan_data

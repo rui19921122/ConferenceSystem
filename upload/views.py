@@ -98,11 +98,14 @@ def handleUploadAudio(request, id):
         return HttpResponse(status=status.HTTP_403_FORBIDDEN)
     user = request.user
     department = user.user.department
+    if Audios.objects.filter(parent_id=id).exists():
+        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
     with open('1.wav', 'wb+') as file:
         new_file = File(file)
         new_file.write(request.body)
         new = Audios(audio=new_file, parent_id=id)
         new.save()
+
     return HttpResponse(status=status.HTTP_201_CREATED)
 
 

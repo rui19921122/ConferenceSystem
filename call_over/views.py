@@ -1,4 +1,5 @@
 import ctypes
+import time
 import datetime
 
 from django.core import exceptions
@@ -30,6 +31,7 @@ def exam_equal_figure(source, string):
 
 
 def get_current_class():
+    # 获取当前班组，若不在规定时间可直接报错
     current_date = datetime.date.today()
     hour = datetime.datetime.now().hour
     day_number = 1 if hour < 12 else 2
@@ -86,7 +88,9 @@ class BeginCallOver(APIView):
         default = get_current_class()
         today = datetime.datetime.today()
         try:
-            locked = AttentionTable.objects.get(date=default.date, department=department, day_number=default.day_number)
+            attention_table = AttentionTable.objects.get(date=default.date, department=department,
+                                                         day_number=default.day_number)
+            locked = attention_table.lock
         except:
             return Response("未找到相关的预点名信息", status=status.HTTP_404_NOT_FOUND)
         if not locked:
@@ -102,16 +106,18 @@ class BeginCallOver(APIView):
             new = CallOverDetail.objects.create(department=department,
                                                 host_person=user,
                                                 class_number=number,
-                                                attend_table=AttentionTable,
+                                                attend_table=attention_table,
                                                 day_number=default_class_number.day_number)
             pk = new.pk
             exist = new
         else:
             exist = exist[0]
+            if exist.end_time:
+                return Response("本次考勤已结束，无法开始", status=status.HTTP_400_BAD_REQUEST)
             pk = exist.pk
             try:
                 class_plan = ClassPlanDayTable.objects.get(time=today)
-                if class_plan.lock == False:  # 如果班计划表未锁定，则对其进行锁定
+                if not class_plan.lock:  # 如果班计划表未锁定，则对其进行锁定
                     class_plan.lock = True
                     class_plan.save()
             except:
@@ -155,6 +161,44 @@ class BeginCallOver(APIView):
                                   'study': study_ser.data,
                                   'accident': accident_ser.data,},
                          'pk': pk})
+
+
+class EndCallOver(APIView):
+    '''
+        结束点名，无必须field
+    '''
+
+    def post(self, request):
+        '''
+        :param request:Request
+        :return:
+        '''
+        user = request.user
+        department = user.user.department
+        if not user.is_authenticated():
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        try:
+            default_class_number = get_current_class()
+        except:
+            return Response('不是规定的时间段', status=status.HTTP_400_BAD_REQUEST)
+        default = get_current_class()
+        today = datetime.datetime.today()
+        number = str(request.data.get('number', default.class_number))
+        query = mapNumberToQuery[number]
+        # 处理添加相关人员
+        exist = CallOverDetail.objects.filter(department=department,
+                                              date=today,
+                                              # 使用day_number 会多一次数据库查询，可优化
+                                              day_number=default_class_number.day_number)
+        if not exist:
+            return Response({'error': '未发现点名数据'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            exist = exist[0]
+            if exist.end_time:
+                return Response({'error': '本次考勤已经结束，请不要再次结束'}, status=status.HTTP_400_BAD_REQUEST)
+            exist.end_time = datetime.datetime.now()
+            exist.save()
+            return Response(status=status.HTTP_202_ACCEPTED)
 
 
 class QueryCallOverByDepartment(APIView):
@@ -344,6 +388,10 @@ class GetCallOverPersonDetail(APIView):
 
 
 class PostFigureData(APIView):
+    '''
+        向服务器传输指纹信息,有两个字段构成,figure_data 为指纹模型，number为预点名ID,如点名成功则返回201，失败返回400+，错误在error字段里
+    '''
+
     def post(self, request: Request, *args, **kwargs):
         department = request.user.user.department
         figure_data = request.POST.get('figure_data')
@@ -375,8 +423,10 @@ class PostFigureData(APIView):
                 return Response(data={'error': '该人员已登陆过，请不要采集两次指纹'}, status=status.HTTP_400_BAD_REQUEST)
             correct_person.checked = datetime.datetime.now()
             correct_person.save()
-            progress = obj.person.filter(study=False, checked__isnull=False).count() / obj.person.all().count()
-            return Response(data={'people': correct_person.worker.name}, status=status.HTTP_201_CREATED)
+            ser = AttentionsDetailSer(obj.person.all(), many=True)
+            return Response(data={'people': correct_person.worker.name,
+                                  'all': ser.data},
+                            status=status.HTTP_201_CREATED)
         else:
             return Response(data={'error': '未找到相关指纹信息'}, status=status.HTTP_404_NOT_FOUND)
 

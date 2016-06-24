@@ -38,21 +38,36 @@ class Figure(models.Model):
     class Meta:
         ordering = ('weight',)
 
+    def __str__(self):
+        return '{}的{}指纹'.format(self.worker_set.first().name, self.name)
+
 
 class FigureSetting(models.Model):
     # 控制部门是否可以采集或变更指纹的行为
-    department = models.OneToOneField('base.Department')
-    can_add = models.BooleanField(default=False)
-    can_delete = models.BooleanField(default=False)
+    department = models.OneToOneField('base.Department', verbose_name='部门')
+    can_add = models.BooleanField(default=False, verbose_name='可增加')
+    can_delete = models.BooleanField(default=False, verbose_name='可删除')
+
+    class Meta:
+        verbose_name_plural = '部门权限设定'
+        verbose_name = '部门权限'
+
+    def __str__(self):
+        return self.department.name
 
 
 class Position(models.Model):
-    name = models.CharField(max_length=15)
-    department = models.ForeignKey('base.Department')
+    name = models.CharField(max_length=15, verbose_name='名称')
+    department = models.ForeignKey('base.Department', verbose_name='部门')
     number = models.PositiveSmallIntegerField(verbose_name='定员数')
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         unique_together = ('name', 'department')
+        verbose_name_plural = '职位'
+        verbose_name = '职位'
 
 
 class AttentionTable(models.Model):
@@ -67,6 +82,10 @@ class AttentionTable(models.Model):
     class Meta:
         unique_together = ('department', 'date', 'day_number')
 
+    def __str__(self):
+        return '{}-{}-{} {}的{}'.format(self.date.year, self.date.month, self.date.day, self.department.name,
+                                       '白班' if self.day_number == '1' else '夜班')
+
 
 class AttentionDetail(models.Model):
     worker = models.ForeignKey('worker.Worker')
@@ -74,3 +93,6 @@ class AttentionDetail(models.Model):
     study = models.BooleanField(default=False, verbose_name='是否为学员')
     checked = models.DateTimeField(blank=True, null=True, verbose_name='签到时间')
     raw_string = models.TextField(blank=True, null=True, verbose_name='指纹仪模板')
+
+    def __str__(self):
+        return self.worker.name
