@@ -21,14 +21,14 @@ from base.views import mainView
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^docs/', include('rest_framework_docs.urls')),
-    url(r'^api/auth/', include('rest_auth.urls')),
-    url(r'^api/class_plan/', include('class_plan.urls')),
-    url(r'^api/study/', include('professionalStudy.urls')),
-    url(r'^api/menu/', include('base.urls')),
-    url(r'^api/worker/', include('worker.urls')),
-    url(r'^api/upload/', include('upload.urls')),
-    url(r'^api/accident/', include('accidentCase.urls')),
-    url(r'^api/call_over/', include('call_over.urls')),
+    url(r'^api/v2/auth/', include('rest_auth.urls')),
+    url(r'^api/v2/class_plan/', include('class_plan.urls')),
+    url(r'^api/v2/study/', include('professionalStudy.urls')),
+    url(r'^api/v2/menu/', include('base.urls')),
+    url(r'^api/v2/worker/', include('worker.urls')),
+    url(r'^api/v2/upload/', include('upload.urls')),
+    url(r'^api/v2/accident/', include('accidentCase.urls')),
+    url(r'^api/v2/call_over/', include('call_over.urls')),
     url(r'^media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
     url(r'^$', mainView)
 ]

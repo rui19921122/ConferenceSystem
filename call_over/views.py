@@ -40,23 +40,19 @@ def get_current_class():
 
 # Create your views here.
 class GetDefaultClassNumber(APIView):
-    def get(self, request):
-        '''
-        :param request:Request
-        :return:
-        '''
-        user = request.user
-        if user.is_authenticated():
-            try:
-                number = get_current_class().class_number
-                return Response({'number': number}
-                                , status=status.HTTP_200_OK)
-            except:
-                return Response({'number': False}
-                                , status=status.HTTP_200_OK)
+    '''
+    返回默认的班次及班别
+    '''
 
-        else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+    def get(self, request: Request):
+        time.sleep(5000)
+        try:
+            number = get_current_class().class_number
+            return Response({'number': number}
+                            , status=status.HTTP_200_OK)
+        except:
+            return Response({'number': False}
+                            , status=status.HTTP_200_OK)
 
 
 mapNumberToQuery = {
@@ -79,12 +75,10 @@ class BeginCallOver(APIView):
         '''
         user = request.user
         department = user.user.department
-        if not user.is_authenticated():
-            return Response(status=status.HTTP_403_FORBIDDEN)
         try:
             default_class_number = get_current_class()
         except:
-            return Response('不是规定的时间段', status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'error':'不是规定的时间段'}, status=status.HTTP_400_BAD_REQUEST)
         default = get_current_class()
         today = datetime.datetime.today()
         try:
@@ -92,9 +86,9 @@ class BeginCallOver(APIView):
                                                          day_number=default.day_number)
             locked = attention_table.lock
         except:
-            return Response("未找到相关的预点名信息", status=status.HTTP_404_NOT_FOUND)
+            return Response(data={'error':"未找到相关的预点名信息"}, status=status.HTTP_404_NOT_FOUND)
         if not locked:
-            return Response("出勤表未锁定，无法进行点名", status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'error':"出勤表未锁定，无法进行点名"}, status=status.HTTP_400_BAD_REQUEST)
         number = str(request.data.get('number', default.class_number))
         query = mapNumberToQuery[number]
         # 处理添加相关人员
@@ -113,7 +107,7 @@ class BeginCallOver(APIView):
         else:
             exist = exist[0]
             if exist.end_time:
-                return Response("本次考勤已结束，无法开始", status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={'error':"本次考勤已结束，无法开始"}, status=status.HTTP_400_BAD_REQUEST)
             pk = exist.pk
             try:
                 class_plan = ClassPlanDayTable.objects.get(time=today)
@@ -175,12 +169,10 @@ class EndCallOver(APIView):
         '''
         user = request.user
         department = user.user.department
-        if not user.is_authenticated():
-            return Response(status=status.HTTP_403_FORBIDDEN)
         try:
             default_class_number = get_current_class()
         except:
-            return Response('不是规定的时间段', status=status.HTTP_400_BAD_REQUEST)
+            return Response(data={'error':'不是规定的时间段'}, status=status.HTTP_400_BAD_REQUEST)
         default = get_current_class()
         today = datetime.datetime.today()
         number = str(request.data.get('number', default.class_number))
@@ -198,7 +190,7 @@ class EndCallOver(APIView):
                 return Response({'error': '本次考勤已经结束，请不要再次结束'}, status=status.HTTP_400_BAD_REQUEST)
             exist.end_time = datetime.datetime.now()
             exist.save()
-            return Response(status=status.HTTP_202_ACCEPTED)
+            return Response(data={'status':'success'},status=status.HTTP_202_ACCEPTED)
 
 
 class QueryCallOverByDepartment(APIView):
@@ -441,7 +433,7 @@ class LockCallOverPerson(APIView):
         except Exception:
             return Response(data={'error': '未找到相关出勤表信息'}, status=status.HTTP_404_NOT_FOUND)
         if attention_table.lock:
-            return Response(data={'detail': '表已锁定，请不要重复操作，可以开始点名'}, status=status.HTTP_200_OK)
+            return Response(data={'error': '表已锁定，请不要重复操作，可以开始点名'}, status=status.HTTP_400_BAD_REQUEST)
         attention_table.lock = True
         attention_table.save()
         return Response(status=status.HTTP_201_CREATED)
@@ -459,7 +451,7 @@ class GetWorkerCanAdd(APIView):
         except Exception:
             return Response(data={'error': '未找到相关出勤表信息'}, status=status.HTTP_404_NOT_FOUND)
         if attention_table.lock:
-            return Response(data={'detail': '表已锁定，请不要重复操作，可以开始点名'}, status=status.HTTP_200_OK)
+            return Response(data={'error': '表已锁定，请不要重复操作，可以开始点名'}, status=status.HTTP_400_BAD_REQUEST)
         workers = Worker.objects.filter(position__department=request.user.user.department)
         had_attention = attention_table.person.all()
         for worker in had_attention:
