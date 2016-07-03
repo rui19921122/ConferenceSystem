@@ -9,6 +9,7 @@ from rest_framework.parsers import FileUploadParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view
 import json
 
 from accidentCase.models import Accident, AccidentFiles
@@ -65,6 +66,7 @@ def handleClassPlanFile(request, date):
         return HttpResponse(content=json.dumps({'status': 'success'}), status=201)
 
 
+@api_view(['POST'])
 def handleUploadImage(request, id):
     if request.user.is_authenticated() and request.method == 'POST':
         department = request.user.user.department
@@ -73,7 +75,8 @@ def handleUploadImage(request, id):
             file = request.FILES['file']
             new = Photos(image=file, parent_id=detail.pk)
             new.save()
-            return HttpResponse(status=status.HTTP_201_CREATED)
+            return Response(data={'status': 'success'}, status=status.HTTP_201_CREATED)
+        return Response(data={'error': '未知错误'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # class handleUploadImage(generic.View):
@@ -91,22 +94,21 @@ def handleUploadImage(request, id):
 #                     return Response(status=status.HTTP_201_CREATED)
 
 
+@api_view(['POST'])
 def handleUploadAudio(request, id):
-    if request.method != 'POST':
-        return HttpResponse(status=status.HTTP_405_METHOD_NOT_ALLOWED)
     if not request.user.is_authenticated():
         return HttpResponse(status=status.HTTP_403_FORBIDDEN)
     user = request.user
     department = user.user.department
     if Audios.objects.filter(parent_id=id).exists():
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+        return Response(data={'error': '录音文件已存在'}, status=status.HTTP_400_BAD_REQUEST)
     with open('1.wav', 'wb+') as file:
         new_file = File(file)
         new_file.write(request.body)
         new = Audios(audio=new_file, parent_id=id)
         new.save()
 
-    return HttpResponse(status=status.HTTP_201_CREATED)
+    return Response(data={'status': 'success'}, status=status.HTTP_201_CREATED)
 
 
 def handleUploadAccident(request, id):
