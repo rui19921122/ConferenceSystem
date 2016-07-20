@@ -124,9 +124,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'accidentCase/static')
 
 # Rest_framework settings
 REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'ConferenceSystem.exception_handler.exception_handler',
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.QueryParameterVersioning',
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

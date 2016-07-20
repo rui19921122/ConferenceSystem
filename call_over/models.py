@@ -20,6 +20,10 @@ class CallOverDetail(models.Model):
         (1, '白班'), (2, '夜班')
     ))
 
+    def __str__(self):
+        return '{}-{}-{} {}{}'.format(self.date.year, self.date.month, self.date.day, self.department.name,
+                                      '白班' if self.day_number == 1 else '夜班')
+
 
 class Photos(models.Model):
     image = models.ImageField(upload_to='CallOverImage')
