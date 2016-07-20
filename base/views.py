@@ -36,6 +36,7 @@ class Menu(APIView):
                      'type': 'multiple', 'name': '考勤管理', 'href': 'check', 'key': 'check0',
                      'children': [
                          {'type': 'single', 'name': '考勤情况预处理', 'href': 'manage-check', 'key': 'check1'},
+                         {'type': 'single', 'name': '路局班前预想表读取', 'href': 'scrapy', 'key': 'check3'},
                          {'type': 'single', 'name': '历史考勤情况查询', 'href': 'query-check', 'key': 'check2'},
                      ]
                  },

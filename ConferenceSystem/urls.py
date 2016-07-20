@@ -17,6 +17,7 @@ from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
 from base.views import mainView
+from django.views import static
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
@@ -29,6 +30,8 @@ urlpatterns = [
     url(r'^api/upload/', include('upload.urls')),
     url(r'^api/accident/', include('accidentCase.urls')),
     url(r'^api/call_over/', include('call_over.urls')),
-    url(r'^api/media/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_ROOT}),
+    url(r'^api/scrapy/', include('scrapy.urls')),
+    url(r'^api/media/(?P<path>.*)$', static.serve,
+        {'document_root': settings.MEDIA_ROOT}),
     url(r'^$', mainView)
 ]

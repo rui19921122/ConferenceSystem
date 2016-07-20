@@ -24,8 +24,9 @@ from .models import ClassPlanUpload
 
 def handleClassPlanFile(request, date):
     if request.method == 'POST' and request.user.is_authenticated():
-        if not WhichDepartmentCanEditClassPlan.objects.filter(department=request.user.user.department).exists():
-            return HttpResponse(content=json.dumps({'error': 'no permission', 'status': 'error'}),
+        if not WhichDepartmentCanEditClassPlan.objects.filter(
+                department=request.user.user.department).exists():
+            return HttpResponse(content=json.dumps({'error': '没有修改权限', 'status': 'error'}),
                                 status=status.HTTP_403_FORBIDDEN)
         date = date.split('-')
         _date = datetime.date(int(date[0]), int(date[1]), int(date[2]))
@@ -38,7 +39,7 @@ def handleClassPlanFile(request, date):
         new = ClassPlanUpload(person=request.user, file=request.FILES['file'])
         new.save()
         try:
-            excel = xlrd.open_workbook(new.file.path)
+            excel = xlrd.open_workbook(new.file.path,formatting_info=True)
         except:
             return HttpResponse(content=json.dumps({'error': 'wrong format', 'status': 'error'}),
                                 status=status.HTTP_403_FORBIDDEN)
@@ -46,6 +47,7 @@ def handleClassPlanFile(request, date):
         if ClassPlanDayTable.objects.filter(time=_date).exists():
             ClassPlanDayTable.objects.get(time=_date).delete()
         table = ClassPlanDayTable.objects.create(publish_person=request.user, time=_date)
+        print(sheet.merged_cells)
         for merged in sheet.merged_cells:
             first_row, last_row, first_col, last_col = merged
             number = sheet.cell_value(first_row, 0)
@@ -98,11 +100,14 @@ def handleUploadAudio(request, id):
         return HttpResponse(status=status.HTTP_403_FORBIDDEN)
     user = request.user
     department = user.user.department
+    if Audios.objects.filter(parent_id=id).exists():
+        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
     with open('1.wav', 'wb+') as file:
         new_file = File(file)
         new_file.write(request.body)
         new = Audios(audio=new_file, parent_id=id)
         new.save()
+
     return HttpResponse(status=status.HTTP_201_CREATED)
 
 

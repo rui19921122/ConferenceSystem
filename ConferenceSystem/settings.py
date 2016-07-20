@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
+import sys
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development settings - unsuitable for production
@@ -47,6 +49,7 @@ INSTALLED_APPS = (
     'rest_framework_docs',
     'upload',
     'call_over',
+    'scrapy'
 )
 
 REST_FRAMEWORK_DOCS = {
@@ -92,7 +95,7 @@ WSGI_APPLICATION = 'ConferenceSystem.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'meeting',
+        'NAME': 'meetings',
         'HOST': 'localhost',
         'PORT': 3306,
         'USER': 'root',
@@ -128,3 +131,9 @@ REST_FRAMEWORK = {
 }
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/api/media/'
+
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME':':memory:',
+    }

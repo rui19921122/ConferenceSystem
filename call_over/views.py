@@ -1,4 +1,5 @@
 import ctypes
+import time
 import datetime
 
 from django.core import exceptions
@@ -30,6 +31,7 @@ def exam_equal_figure(source, string):
 
 
 def get_current_class():
+    # 获取当前班组，若不在规定时间可直接报错
     current_date = datetime.date.today()
     hour = datetime.datetime.now().hour
     day_number = 1 if hour < 12 else 2
@@ -82,15 +84,20 @@ class BeginCallOver(APIView):
         try:
             default_class_number = get_current_class()
         except:
-            return Response('不是规定的时间段', status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': '不是规定的时间段'},
+                            status=status.HTTP_400_BAD_REQUEST)
         default = get_current_class()
         today = datetime.datetime.today()
         try:
-            locked = AttentionTable.objects.get(date=default.date, department=department, day_number=default.day_number)
+            attention_table = AttentionTable.objects.get(date=default.date, department=department,
+                                                         day_number=default.day_number)
+            locked = attention_table.lock
         except:
-            return Response("未找到相关的预点名信息", status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': "未找到相关的预点名信息"},
+                            status=status.HTTP_404_NOT_FOUND)
         if not locked:
-            return Response("出勤表未锁定，无法进行点名", status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': "出勤表未锁定，无法进行点名"},
+                            status=status.HTTP_400_BAD_REQUEST)
         number = str(request.data.get('number', default.class_number))
         query = mapNumberToQuery[number]
         # 处理添加相关人员
@@ -102,16 +109,19 @@ class BeginCallOver(APIView):
             new = CallOverDetail.objects.create(department=department,
                                                 host_person=user,
                                                 class_number=number,
-                                                attend_table=AttentionTable,
+                                                attend_table=attention_table,
                                                 day_number=default_class_number.day_number)
             pk = new.pk
             exist = new
         else:
             exist = exist[0]
+            if exist.end_time:
+                return Response({'error': "本次考勤已结束，无法开始"},
+                                status=status.HTTP_400_BAD_REQUEST)
             pk = exist.pk
             try:
                 class_plan = ClassPlanDayTable.objects.get(time=today)
-                if class_plan.lock == False:  # 如果班计划表未锁定，则对其进行锁定
+                if not class_plan.lock:  # 如果班计划表未锁定，则对其进行锁定
                     class_plan.lock = True
                     class_plan.save()
             except:
@@ -155,6 +165,45 @@ class BeginCallOver(APIView):
                                   'study': study_ser.data,
                                   'accident': accident_ser.data,},
                          'pk': pk})
+
+
+class EndCallOver(APIView):
+    '''
+        结束点名，无必须field
+    '''
+
+    def post(self, request):
+        '''
+        :param request:Request
+        :return:
+        '''
+        user = request.user
+        department = user.user.department
+        if not user.is_authenticated():
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        try:
+            default_class_number = get_current_class()
+        except:
+            return Response({'error': '不是规定的时间段'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        default = get_current_class()
+        today = datetime.datetime.today()
+        number = str(request.data.get('number', default.class_number))
+        query = mapNumberToQuery[number]
+        # 处理添加相关人员
+        exist = CallOverDetail.objects.filter(department=department,
+                                              date=today,
+                                              # 使用day_number 会多一次数据库查询，可优化
+                                              day_number=default_class_number.day_number)
+        if not exist:
+            return Response({'error': '未发现点名数据'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            exist = exist[0]
+            if exist.end_time:
+                return Response({'error': '本次考勤已经结束，请不要再次结束'}, status=status.HTTP_400_BAD_REQUEST)
+            exist.end_time = datetime.datetime.now()
+            exist.save()
+            return Response(status=status.HTTP_202_ACCEPTED)
 
 
 class QueryCallOverByDepartment(APIView):
@@ -259,6 +308,7 @@ class GetCallOverPerson(generics.ListAPIView, generics.GenericAPIView):
             can_add_workers = can_add_workers.exclude(pk=worker.worker_id)
         can_add_workers.filter(position__department=request.user.user.department)
         return Response(data={'attend': self.get_serializer_class()(attention_table).data,
+                              'scrapy': 0,
                               'id': attention_table.id,
                               'lock': attention_table.lock,
                               'replace': WorkerSer(can_add_workers, many=True).data},

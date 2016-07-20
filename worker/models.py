@@ -63,6 +63,8 @@ class AttentionTable(models.Model):
                                   )
     person = models.ManyToManyField('worker.AttentionDetail')
     lock = models.BooleanField(default=False)
+    scrapy = models.ManyToManyField('scrapy.ScrapyData'
+                                    , verbose_name='爬取数据')
 
     class Meta:
         unique_together = ('department', 'date', 'day_number')
