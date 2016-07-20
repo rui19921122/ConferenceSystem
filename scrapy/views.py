@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 import requests
 import html
 from .serization import ScrapySer
+from call_over.serialzation import AttentionSer
 
 
 # Create your views here.
@@ -35,7 +36,6 @@ class GetId(generics.GenericAPIView):
             attend_table = AttentionTable.objects.get(pk=request.data.get('attend_table'))
         except:
             return ErrorResponse('wrong attend table number')
-        print(request.user.user.department.pk)
         if attend_table.department == request.user.user.department:
             pass
         else:
@@ -45,11 +45,14 @@ class GetId(generics.GenericAPIView):
                 user=request.user
             )
         except Exception as error:
-            return ErrorResponse('Station message not found')
+            return ErrorResponse('未找到存储的路局网站数据，忘记设置密码？')
         username, password = station_message.username, station_message.password
         login_url = r'http://10.128.20.124/'
         session = requests.session()
-        login_page = session.get(login_url)
+        try:
+            login_page = session.get(login_url)
+        except Exception as error:
+            return ErrorResponse("服务器访问路局网页失败")
         if login_page.status_code != 200:
             return ErrorResponse('get login page failure')
         soup = BeautifulSoup(login_page.text, "html.parser")
@@ -84,10 +87,11 @@ class GetId(generics.GenericAPIView):
                 data.append({'title': title,
                              'content': content,
                              'number': number + 1})
-            ser = ScrapySer(data=data, many=True)
-            if ser.is_valid():
-                ser.save()
-                return Response(data={'data': ser.data}, status=200)
+            attend_ser = AttentionSer(attend_table)
+            attend_ser.scrapy = ScrapySer(data=data, many=True)
+            if attend_ser.is_valid():
+                attend_ser.save()
+                return Response(data={'data': attend_ser.scrapy.data}, status=200)
             else:
                 return ErrorResponse('序列化失败')
         else:

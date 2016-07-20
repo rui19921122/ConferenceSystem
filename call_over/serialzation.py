@@ -6,6 +6,7 @@ from class_plan.serialzation import ClassPlanDayTable
 from professionalStudy.serialzation import ProfessionalStudySerializer
 from worker.models import Worker, AttentionTable, AttentionDetail
 from .models import Photos, Audios, CallOverDetail
+from scrapy.serization import ScrapySer
 
 
 class SlugUserNameRelatedField(RelatedField):
@@ -74,6 +75,7 @@ class AttentionsDetailSer(serializers.ModelSerializer):
 class AttentionSer(serializers.ModelSerializer):
     department = serializers.SlugRelatedField(read_only=True, slug_field='name')
     person = AttentionsDetailSer(many=True)
+    scrapy = ScrapySer(many=True)
 
     class Meta:
         model = AttentionTable

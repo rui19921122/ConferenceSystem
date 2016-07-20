@@ -21,6 +21,7 @@ from .models import CallOverDetail
 from .models import CallOverNumber
 from .permission import OnlyOwnerDepartmentCanRead
 from .serialzation import PhotoSer, AudioSer, WorkerSer, CallOverSer, AttentionSer, AttentionsDetailSer
+from scrapy.serization import ScrapySer
 
 windll = ctypes.windll.JZTDevDll
 
@@ -302,13 +303,13 @@ class GetCallOverPerson(generics.ListAPIView, generics.GenericAPIView):
                 )
                 new.save()
                 attention_table.person.add(new)
+        scrapy_data = attention_table.scrapy.all()
         can_add_workers = Worker.objects.all()
         had_attention = attention_table.person.all()
         for worker in had_attention:
             can_add_workers = can_add_workers.exclude(pk=worker.worker_id)
         can_add_workers.filter(position__department=request.user.user.department)
         return Response(data={'attend': self.get_serializer_class()(attention_table).data,
-                              'scrapy': 0,
                               'id': attention_table.id,
                               'lock': attention_table.lock,
                               'replace': WorkerSer(can_add_workers, many=True).data},
