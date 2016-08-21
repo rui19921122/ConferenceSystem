@@ -49,7 +49,8 @@ INSTALLED_APPS = (
     'rest_framework_docs',
     'upload',
     'call_over',
-    'scrapy'
+    'scrapy',
+    'query',  # 查询点名相关信息
 )
 
 REST_FRAMEWORK_DOCS = {
@@ -137,5 +138,5 @@ MEDIA_URL = '/api/media/'
 if 'test' in sys.argv:
     DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME':':memory:',
+        'NAME': ':memory:',
     }
