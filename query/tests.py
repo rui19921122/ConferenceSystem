@@ -40,3 +40,4 @@ class TestQueryList(APITestCase):
         url = reverse('query-call-over')
         self.client.force_login(User.objects.get(username='test'))
         response = self.client.get(url)
+

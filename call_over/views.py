@@ -9,7 +9,6 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
 from accidentCase.models import Accident
 from accidentCase.serization import AccidentSerializer
 from class_plan.models import ClassPlanDayTable
@@ -426,7 +425,7 @@ class PostFigureData(APIView):
                 return Response(data={'error': '该人员已登陆过，请不要采集两次指纹'}, status=status.HTTP_400_BAD_REQUEST)
             correct_person.checked = datetime.datetime.now()
             correct_person.save()
-            progress = obj.person.filter(study=False, checked__isnull=False).count() / obj.person.all().count()
+            # progress = obj.person.filter(study=False, checked__isnull=False).count() / obj.person.all().count()
             return Response(data={'people': correct_person.worker.name}, status=status.HTTP_201_CREATED)
         else:
             return Response(data={'error': '未找到相关指纹信息'}, status=status.HTTP_404_NOT_FOUND)
