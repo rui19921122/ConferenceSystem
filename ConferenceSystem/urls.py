@@ -30,9 +30,11 @@ urlpatterns = [
     url(r'^api/upload/', include('upload.urls')),
     url(r'^api/accident/', include('accidentCase.urls')),
     url(r'^api/call_over/', include('call_over.urls')),
+    url(r'^api/v2/call_over/', include('call_over.urls')),
     url(r'^api/scrapy/', include('scrapy.urls')),
     url(r'^api/query/',include('query.urls')),
     url(r'^api/media/(?P<path>.*)$', static.serve,
         {'document_root': settings.MEDIA_ROOT}),
-    url(r'^$', mainView)
+    url(r'^$', mainView),
+    url(r'^.*/$', mainView)
 ]

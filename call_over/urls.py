@@ -4,7 +4,7 @@ from .views import *
 
 urlpatterns = [
     url(r'^get-default-class-number/$', view=GetDefaultClassNumber.as_view(), name='get-default-class-number'),
-    url(r'^begin-call-over/$', view=BeginCallOver.as_view(), name='begin-call-over'),
+    url(r'^get-call-over-text/$', view=GetCallOverText.as_view(), name='get-call-over-text'),
     url(r'^end-call-over/$', view=EndCallOver.as_view(), name='end-call-over'),
     url(r'^query-call-over-detail/(?P<id>\d{1,8})/$', view=QueryCallOverByDepartment.as_view(), name='query-call-over'),
     url(r'^list-call-over/$', view=ListClassOverByDepartment.as_view(), name='query-call-over'),
@@ -17,5 +17,5 @@ urlpatterns = [
     url(r'^add-call-over-person/(?P<id>\d{1,8})/$', view=AddCallOverPerson.as_view(), name='add-call-over-person'),
     url(r'^get-can-add-call-over-person/(?P<id>\d{1,8})/$', view=GetWorkerCanAdd.as_view(),
         name='add-call-over-person'),
-    url(r'^call-over-note/(?P<id>\d{1,8})/$', view=call_over_note, name='call_over_note'),
+    url(r'^call-over-note/$', view=call_over_note, name='call_over_note'),
 ]

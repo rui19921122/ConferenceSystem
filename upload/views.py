@@ -5,6 +5,7 @@ from django.core.files import File
 from django.http.response import HttpResponse
 from django.views import generic
 from rest_framework import status
+from rest_framework.decorators import api_view
 from rest_framework.parsers import FileUploadParser
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -16,6 +17,8 @@ from call_over.models import Audios, Photos
 from call_over.models import CallOverDetail
 from class_plan.models import ClassPlanDayDetail, ClassPlanBase, ClassPlanDayTable, SinglePublishDetail
 from class_plan.models import WhichDepartmentCanEditClassPlan
+from utils.response import ErrorResponse
+from worker.models import AttentionTable
 from . import serialzation
 from .models import ClassPlanUpload
 
@@ -39,7 +42,7 @@ def handleClassPlanFile(request, date):
         new = ClassPlanUpload(person=request.user, file=request.FILES['file'])
         new.save()
         try:
-            excel = xlrd.open_workbook(new.file.path,formatting_info=True)
+            excel = xlrd.open_workbook(new.file.path, formatting_info=True)
         except:
             return HttpResponse(content=json.dumps({'error': 'wrong format', 'status': 'error'}),
                                 status=status.HTTP_403_FORBIDDEN)
@@ -93,22 +96,27 @@ def handleUploadImage(request, id):
 #                     return Response(status=status.HTTP_201_CREATED)
 
 
+@api_view(['POST'])
 def handleUploadAudio(request, id):
-    if request.method != 'POST':
-        return HttpResponse(status=status.HTTP_405_METHOD_NOT_ALLOWED)
     if not request.user.is_authenticated():
         return HttpResponse(status=status.HTTP_403_FORBIDDEN)
     user = request.user
     department = user.user.department
-    if Audios.objects.filter(parent_id=id).exists():
-        return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
-    with open('1.wav', 'wb+') as file:
+    try:
+        detail = AttentionTable.objects.get(pk=id)
+    except:
+        return ErrorResponse("not found")
+    # if Audios.objects.filter(parent_id=id).exists():
+    #     return HttpResponse(status=status.HTTP_400_BAD_REQUEST)
+    with open('{}-{}-{}.avi'.format(
+            department.name, detail.date, detail.day_number
+    ), 'wb+') as file:
         new_file = File(file)
         new_file.write(request.body)
-        new = Audios(audio=new_file, parent_id=id)
+        new = Audios(audio=new_file, attend_table_id=id)
         new.save()
 
-    return HttpResponse(status=status.HTTP_201_CREATED)
+    return Response(data={'status': 'success'}, status=status.HTTP_201_CREATED)
 
 
 def handleUploadAccident(request, id):

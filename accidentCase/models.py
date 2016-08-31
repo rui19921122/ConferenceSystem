@@ -22,6 +22,7 @@ class Accident(models.Model):
                                          related_name='accident_forth')
 
     def study(self, number, exist):
+        number = str(number)
         if number == '1':
             self.checked_by_first = exist
         if number == '2':

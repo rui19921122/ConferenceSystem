@@ -21,6 +21,7 @@ class ProfessionalStudy(models.Model):
     department = models.ForeignKey('base.Department')
 
     def study(self, number, exist):
+        number = str(number)
         if number == '1':
             self.checked_by_first = exist
         if number == '2':

@@ -34,7 +34,8 @@ class Photos(models.Model):
 class Audios(models.Model):
     audio = models.FileField(upload_to='CallOverAudio')
     date = models.DateTimeField(auto_now_add=True)
-    parent = models.OneToOneField(CallOverDetail)
+    parent = models.OneToOneField(CallOverDetail,null=True,blank=True)
+    attend_table = models.ForeignKey(AttentionTable,null=True,blank=True)
 
 
 class CallOverNumber(models.Model):
