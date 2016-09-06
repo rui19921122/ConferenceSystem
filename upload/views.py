@@ -97,7 +97,7 @@ def handleUploadImage(request, id):
 
 
 @api_view(['POST'])
-def handleUploadAudio(request, id):
+def handle_upload_audio(request, id):
     if not request.user.is_authenticated():
         return HttpResponse(status=status.HTTP_403_FORBIDDEN)
     user = request.user
